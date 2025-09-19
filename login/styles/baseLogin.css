@@ -1,0 +1,173 @@
+/* 
+    Autor: Gustavo Alves
+    Projeto: Projeto NotaDez
+    Arquivo: baseLogin.css
+    Data: 10/09/2025
+*/
+
+/* 
+    Estilos globais do body 
+    - Centraliza todo o conteúdo no centro da tela (horizontal e vertical)
+    - Remove margens padrão
+    - Define altura mínima de 100% da tela
+    - Aplica cor de fundo clara
+*/
+body {
+    display: flex;
+    justify-content: center; 
+    align-items: center;    
+    min-height: 100vh;       
+    margin: 0;               
+    font-family: Arial, sans-serif;
+    background-color: #f3f3f3; 
+}
+
+/* 
+    Caixa principal onde ficam os formulários
+    - Centraliza texto
+    - Define largura fixa
+    - Cria fundo branco com bordas arredondadas
+    - Aplica sombra para destaque
+*/
+.caixa {
+    text-align: center;
+    width: 350px;
+    padding: 20px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+/* Espaçamento inferior entre formulários e outros elementos */
+.form {
+    margin-bottom: 20px;
+}
+
+/* 
+    Título principal (h1)
+    - Define tamanho da fonte
+    - Ajusta espaçamento das letras
+    - Reduz espaço no topo
+*/
+h1 {
+    font-size: 2.15em;
+    letter-spacing: -0.5px;
+    margin-top: 10px;
+}
+
+/* 
+    Estilo dos rótulos (label)
+    - Define espaçamento e tamanho da fonte
+    - Exibe cada label como bloco separado
+*/
+.label {
+    letter-spacing: 0.5px;
+    font-size: 1.1em;
+    display: block;
+    margin-bottom: -14px;
+}
+
+/* 
+    Campos de entrada (input)
+    - Define largura, altura e espaçamento interno
+    - Adiciona borda arredondada e remove outline padrão
+*/
+.input {
+    width: 230px;  
+    height: 16px;  
+    padding: 10px;
+    font-size: 16px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+}
+
+/* Efeito hover no input: muda cor da borda */
+.input:hover {
+    transition: border 300ms ease;
+    border: 2px solid #3498db;
+}
+
+/* Efeito quando o input está ativo (clicado): mantém borda azul */
+.input:active {
+    border: 2px solid #3498db;
+}
+
+/* 
+    Link "Esqueci a senha"
+    - Alinhamento ajustado manualmente
+    - Fonte menor e cinza
+*/
+#esqueciSenha {
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    text-indent: -140px;
+    margin-top: -14px;
+    font-size: 0.8em;
+    font-weight: bold;
+    color: grey;
+}
+
+/* 
+    Efeito hover no "Esqueci a senha"
+    - Sublinhado
+    - Cursor em forma de mão
+    - Cor mais escura
+*/
+#esqueciSenha:hover {
+    text-decoration: underline;
+    cursor: pointer;
+    color: rgb(61, 61, 61);
+}
+
+/* 
+    Botões principais
+    - Define tamanho, cor de fundo azul e texto branco
+    - Remove borda padrão
+    - Adiciona bordas arredondadas e efeito de cursor
+*/
+.btn {
+    width: 150px;
+    height: 30px;
+    background: #007BFF;
+    color: white;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 5px;
+}
+
+/* Efeito hover nos botões: muda o tom de azul */
+.btn:hover {
+    background: #0056b3;
+}
+
+/* 
+    Texto "Não é membro?"
+    - Fonte menor e em negrito
+    - Cor cinza
+*/
+#naoMembro {
+    margin-top: 10px;
+    font-size: 0.8em;
+    letter-spacing: -0.5px;
+    font-weight: bold;
+    color: grey;
+}
+
+/* 
+    Link "Criar conta"
+    - Sublinhado e com cursor em forma de mão
+*/
+#criarConta {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Efeito hover em "Criar conta": cor cinza escura */
+#criarConta:hover {
+    color: rgb(61, 61, 61);
+}
