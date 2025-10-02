@@ -9,21 +9,44 @@
 const parametroAnterior = new URLSearchParams(window.location.search);
 const fluxo = parametroAnterior.get('fluxo');
 
-// Captura os valores digitados
-const codigo = document.getElementById("txtCodigo").value;
-
-// Seleciona o elemento do HTML "btnProximo" e armazena ele na constante btnProximo
+// Captura os elementos do HTML
+const form = document.getElementById("formCodigoConta");
+const inputCodigo = document.getElementById("txtCodigo");
 const btnProximo = document.getElementById('btnProximo');
+const msgAviso = document.getElementById("msgAviso");
+
+btnProximo.style.display = 'none';
+
+// mostra/esconde botão enquanto digita
+inputCodigo.addEventListener('input', () => {
+    if (inputCodigo.value.trim() !== '') {
+        btnProximo.style.display = 'inline-block';
+        msgAviso.style.display = 'none';
+    } 
+    else {
+        btnProximo.style.display = 'none';
+    }
+});
 
 // Apos clicar no botao, define para onde o usuário vai com base no fluxo 
-btnProximo.addEventListener('click', () => {
+btnProximo.addEventListener('click', (e) => {
+    e.preventDefault(); // Impede que o form seja submetido automaticamente
 
-    // Fluxo do cadastro
+    if (inputCodigo.value.trim() === '') {
+        msgAviso.textContent = "O campo não pode ficar vazio!";
+        msgAviso.style.display = 'block';
+        return; // Não redireciona se o campo estiver vazio
+    } 
+    else {
+        msgAviso.style.display = 'none';
+    }
+
+    // Redireciona conforme fluxo
     if (fluxo === 'cadastro') {
         window.location.href = 'sucesso.html?fluxo=cadastro';
-
-    // Fluxo da senha
-    } else if (fluxo === 'esqueciSenha') {
-        window.location.href = 'alteracaoSenha.html';
     } 
+    else if (fluxo === 'esqueciSenha') {
+        window.location.href = 'alteracaoSenha.html';
+    }
 });
+

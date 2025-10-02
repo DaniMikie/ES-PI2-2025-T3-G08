@@ -1,0 +1,26 @@
+{
+  "name": "es-pi2-2025-t3-g08",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DaniMikie/ES-PI2-2025-T3-G08.git"
+  },
+  "keywords": [],
+  "author": "Gustavo Alves",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DaniMikie/ES-PI2-2025-T3-G08/issues"
+  },
+  "homepage": "https://github.com/DaniMikie/ES-PI2-2025-T3-G08#readme",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "mysql": "^2.18.1"
+  }
+}

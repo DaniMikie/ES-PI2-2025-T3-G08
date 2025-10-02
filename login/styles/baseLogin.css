@@ -12,6 +12,7 @@
     - Define altura mínima de 100% da tela
     - Aplica cor de fundo clara
 */
+
 body {
     display: flex;
     justify-content: center; 
@@ -170,4 +171,15 @@ h1 {
 /* Efeito hover em "Criar conta": cor cinza escura */
 #criarConta:hover {
     color: rgb(61, 61, 61);
+}
+
+.aviso {
+    font-family: Arial, Helvetica, sans-serif;
+    margin-top: -10px;
+    font-size: 0.8em;
+    letter-spacing: -0.15px;
+    font-weight: 800;
+    color: red;
+    opacity: 75%;
+    font-style: italic;
 }
