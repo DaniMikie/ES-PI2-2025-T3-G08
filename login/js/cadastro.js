@@ -18,5 +18,5 @@ const btnProximo = document.getElementById('btnProximo');
 btnProximo.addEventListener('click', () => {
 
     // Redireciona para confirmar código no fluxo de cadastro
-    window.location.href = 'confirmarCodigo.html?fluxo=cadastro';
+    window.location.href = '/confirmarCodigo?fluxo=cadastro';
 });

@@ -28,7 +28,7 @@ inputCodigo.addEventListener('input', () => {
     }
 });
 
-// Apos clicar no botao, define para onde o usuário vai com base no fluxo 
+
 btnProximo.addEventListener('click', (e) => {
     e.preventDefault(); // Impede que o form seja submetido automaticamente
 
@@ -43,10 +43,10 @@ btnProximo.addEventListener('click', (e) => {
 
     // Redireciona conforme fluxo
     if (fluxo === 'cadastro') {
-        window.location.href = 'sucesso.html?fluxo=cadastro';
+        window.location.href = '/sucesso?fluxo=cadastro';
     } 
     else if (fluxo === 'esqueciSenha') {
-        window.location.href = 'alteracaoSenha.html';
+        window.location.href = '/alteracaoSenha';
     }
 });
 

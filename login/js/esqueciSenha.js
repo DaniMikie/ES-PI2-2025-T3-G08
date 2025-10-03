@@ -17,5 +17,5 @@ btnProximo.addEventListener('click', () => {
     // Aqui futuramente deve ser feita a validação do e-mail informado
 
     // Redireciona para confirmar código no fluxo da senha
-    window.location.href = 'confirmarCodigo.html?fluxo=esqueciSenha';
+    window.location.href = '/confirmarCodigo?fluxo=esqueciSenha';
 });

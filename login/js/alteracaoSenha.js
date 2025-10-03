@@ -18,5 +18,5 @@ btnProximo.addEventListener('click', () => {
     // Aqui futuramente deve ser feita a validação da senha
 
     // Redireciona para sucesso com o fluxo da senha
-    window.location.href = 'sucesso.html?fluxo=esqueciSenha';
+    window.location.href = '/sucesso?fluxo=esqueciSenha';
 });
