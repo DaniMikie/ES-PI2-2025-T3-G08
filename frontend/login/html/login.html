@@ -1,0 +1,55 @@
+<!-- 
+    Autor: Gustavo Alves
+    Projeto: Projeto NotaDez
+    Arquivo: login.html
+    Data: 10/09/2025
+-->
+
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projeto NotaDez - Login</title>
+
+    <!-- Importa o CSS -->
+    <link href="../styles/baseLogin.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body>
+    <div class="caixa">
+        <h1>Projeto NotaDez</h1>
+
+        <!-- Formulário de login -->
+        <form class="form" id="formLogin"> 
+
+            <!-- Campo de e-mail -->
+            <label class="label" for="txtEmail">Digite o e-mail</label><br/>
+            <input class="input" id="txtEmail" placeholder="E-mail" type="text" required><br/><br/>
+            
+            <!-- Campo de senha -->
+            <label class="label" for="txtSenha">Digite a senha</label><br/>
+            <input class="input" id="txtSenha" placeholder="Senha" type="password" required><br/><br/>
+
+            <!-- Link para recuperação de senha -->
+            <p id="esqueciSenha" onclick="window.location.href='esqueciSenha.html'">Esqueci a senha</p>
+        </form>
+
+        <!-- Botão de login (associado ao formulário) -->
+        <button class="btn" id="btnLogin" type="submit" form="formLogin">Login</button>
+
+        <!-- Link para cadastro -->
+        <p id="naoMembro">Não é membro? 
+            <span id="criarConta" onclick="window.location.href='cadastro.html'">Criar conta</span>
+        </p>
+
+        <!-- Espaço para mensagens (ex: erro de login) -->
+        <p id="mensagem"></p>
+
+    </div>
+    
+    <!-- Script de controle do login -->
+    <script src="../js/login.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!-- 
+    Autor: Gustavo Alves
+    Projeto: Projeto NotaDez
+    Arquivo: disciplinas.html
+    Data: 09/10/2025
+-->
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projeto NotaDez - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+    crossorigin="anonymous">
+    <link rel="stylesheet" href="../styles/base.css">
+
+</head>
+<body>
+    <!-- Navbar superior -->
+    <nav class="navbar navbar-expand-lg bg-white fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" >Projeto NotaDez</a>
+            <div class="d-flex">
+                <span class="me-3 text-muted">Olá, XXXXXX!</span>
+                <button class="btn btn-outline-danger btn-sm">Sair</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-12 col-md-2 col-lg-2 sidebar position-fixed">
+                <a href="#" id="btnVoltar">Voltar</a>
+                <a href="" class="active">Disciplinas</a>
+            </div>
+
+            <!-- Conteúdo principal -->
+            <div class="col-12 col-md-9 col-lg-10 content offset-md-2">
+                <h3 id="msgCurso" class="fw-bold mb-4 tituloPrincipal"></h3>
+
+            <!-- Card principal -->
+            <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Cadastrar nova disciplina</h5>
+                    <form id="formDisc" class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label titulo">Nome</label>
+                            <input id="nomeDisc" type="text" class="form-control" placeholder="Ex: Elicitação de requisitos">
+                            <p class="aviso" id="avisoNomeDisc"></p>
+                        </div>
+                    <div class="col-md-6">
+                        <label class="form-label titulo">Sigla</label>
+                        <input id="siglaDisc" type="text" class="form-control" placeholder="Ex: ER">
+                        <p class="aviso" id="avisoSigla">Digite ao menos dois caracteres</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label titulo">Código</label>
+                        <input id="codDisc" type="text" class="form-control" placeholder="Ex: 12007">
+                        <p class="aviso" id="aviso">Digite 5 dígitos</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label titulo">Período</label>
+                        <input id="periodoDisc" type="text" class="form-control" placeholder="Ex: 3° Semestre">
+                        <p class="aviso" id="avisoPeriodo">Digite apenas o número</p>
+                    </div>
+                        <div class="col-12">
+                            <button id="btnCadastrar" type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tabela de disciplinas -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                <h5 class="card-title mb-3">Disciplinas cadastradas</h5>
+                <table id="tabelaDisc" class="table table-hover align-middle">
+                    <thead class="table-light">
+                    <tr style="text-indent: 5px;">
+                        <th>Nome</th>
+                        <th>Sigla</th>
+                        <th>Código</th>
+                        <th>Período</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Importação do Jquery mask -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" 
+        integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" 
+        crossorigin="anonymous" 
+        referrerpolicy="no-referrer">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" 
+        integrity="sha512-pHVGpX7F/27yZ0ISY+VVjyULApbDlD0/X0rgGbTqCE7WFW5MezNTWG/dnhtbBuICzsd0WQPgpE4REBLv+UqChw==" 
+        crossorigin="anonymous" 
+        referrerpolicy="no-referrer">
+    </script>
+
+    <!-- Importação do Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+    <script src="../js/disciplinas.js" ></script>
+</body>
+</html>

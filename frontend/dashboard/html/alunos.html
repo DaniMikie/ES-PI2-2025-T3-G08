@@ -1,0 +1,147 @@
+<!-- 
+    Autor: Gustavo Alves
+    Projeto: Projeto NotaDez
+    Arquivo: alunos.html
+    Data: 09/10/2025
+-->
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projeto NotaDez - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+    crossorigin="anonymous">
+    <link rel="stylesheet" href="../styles/base.css">
+
+</head>
+<body>
+    <!-- Navbar superior -->
+    <nav class="navbar navbar-expand-lg bg-white fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" >Projeto NotaDez</a>
+            <div class="d-flex">
+                <span class="me-3 text-muted">Olá, XXXXXX!</span>
+                <button class="btn btn-outline-danger btn-sm">Sair</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-12 col-md-2 col-lg-2 sidebar position-fixed">
+                <a href="instituicoes.html">Início</a>
+                <a href="#" id="btnVoltar">Voltar</a>
+                <a href=""class="active">Alunos/Notas</a>
+            </div>
+
+            <!-- Conteúdo principal -->
+            <div class="col-12 col-md-9 col-lg-10 content offset-md-2">
+
+                <!-- Modal para Cadastrar Nota  -->
+                <div class="modal fade" id="modalCadastrarNota" tabindex="-1" aria-labelledby="modalCadastrarNotaLabel" aria-hidden="true">
+                  <div class="modal-dialog modal-lg"> 
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="modalCadastrarNotaLabel" style="text-indent: 1rem;">Cadastrar componente de nota</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                      </div>
+                      <div class="modal-body">
+                        <form id="formNota" class="row g-3">
+                          <div class="col-md-6">
+                            <label for="nomeComponente" class="form-label titulo">Componente</label>
+                            <input id="nomeComponente" type="text" class="form-control" placeholder="Ex: N1, P1, T1">
+                            <p id="avisoNomeComponente" class="aviso">Digite uma letra e um numero</p>
+                          </div>
+                          <div class="col-md-4">
+                            <label for="pesoComponente" class="form-label titulo">Peso em "%" da média final</label>
+                            <input id="pesoComponente" type="text" class="form-control" placeholder="Ex: 30%">
+                          </div>
+                          <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" id="btnAddComponente" class="btn btn-primary w-100">Adicionar</button>
+                          </div>
+
+                          <div class="col-12">
+                            <h6>Componentes adicionados:</h6>
+                            <ul id="listaComponentes" class="list-group mb-3"></ul>
+                          </div>
+                        </form>
+                        <div class="col-12">
+                          <p id="avisoCadastrarNota" class="aviso" style="text-indent: 0px;">A soma dos pesos deve totalizar 100%</p>
+                          <button id="btnSalvarNota" type="submit" class="btn btn-success">Salvar nota</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <h3 id="msgTurma" class="fw-bold mb-4 tituloPrincipal"></h3>
+                <!-- Card principal -->
+            <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Cadastrar novo aluno</h5>
+                    <form id="formAluno" class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label titulo">RA do aluno</label>
+                            <input id="raAluno" type="text" class="form-control" placeholder="Ex: 25001680">
+                            <p class="aviso" id="aviso">Digite 8 dígitos</p>
+                        </div>
+                    <div class="col-md-6">
+                        <label class="form-label titulo">Nome do aluno</label>
+                        <input id="nomeAluno" type="text" class="form-control" placeholder="Ex: Robertinho da Silva">
+                    </div>
+                        <div class="col-12">
+                            <button id="btnCadastrar" type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tabela de alunos -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="divBotaoNota">
+                      <h5 class="card-title mb-3" style="text-indent: 10px;">Alunos cadastrados</h5>
+                      <button id="btnNota" class="btn btn-outline-primary" title="Seleciona o cálculo da nota">Selecionar nota</button>
+                    </div>
+                  <div class="table-responsive">
+                    <table id="tabelaAlunos" class="table table-hover align-middle">
+                      <thead class="table-light">
+                        <tr class="tabelaAlunos">
+                          <th class="headerRa" style="min-width: 150px;">RA</th>
+                          <th class="headerNome" style="min-width: 275px;">Nome</th>
+                          <th class="text-center" >Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <!-- Linhas da tabela inseridas via TS -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Importação do Jquery mask -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" 
+    integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" 
+    crossorigin="anonymous" 
+    referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" 
+    integrity="sha512-pHVGpX7F/27yZ0ISY+VVjyULApbDlD0/X0rgGbTqCE7WFW5MezNTWG/dnhtbBuICzsd0WQPgpE4REBLv+UqChw==" 
+    crossorigin="anonymous" 
+    referrerpolicy="no-referrer"></script>
+
+    <!-- Importação do Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+        <script src="../js/alunos.js" ></script>
+</body>
+</html>

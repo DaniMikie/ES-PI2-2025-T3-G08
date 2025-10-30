@@ -1,0 +1,40 @@
+<!-- 
+    Autor: Gustavo Alves
+    Projeto: Projeto NotaDez
+    Arquivo: esqueciSenha.html
+    Data: 10/09/2025
+-->
+
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projeto NotaDez - Login</title>
+
+    <!-- Importa o CSS -->
+    <link href="../styles/baseLogin.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body>
+    <div class="caixa">
+        <h1>Redefinir senha</h1>
+
+        <!-- Formulário para informar o e-mail cadastrado -->
+        <form class="form" id="formEsqueciSenha">   
+
+            <label class="label" for="txtEmail">Digite o e-mail cadastrado</label><br/>
+            <input class="input" id="txtEmail" placeholder="E-mail" type="text" required><br/><br/>
+            <!-- Botão para avançar (irá para confirmar código) -->
+            <button class="btn" id="btnProximo" type="submit" >Avançar</button>
+            
+        </form>
+
+    
+    </div>
+
+    <!-- Script de validação e navegação -->
+    <script src="../js/esqueciSenha.js"></script>
+
+</body>
+</html>

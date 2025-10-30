@@ -1,0 +1,39 @@
+<!-- 
+    Autor: Gustavo Alves
+    Projeto: Projeto NotaDez
+    Arquivo: confirmarCodigo.html
+    Data: 10/09/2025
+-->
+
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projeto NotaDez - Login</title>
+
+    <!-- Importa o CSS -->
+    <link href="../styles/baseLogin.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body>
+    <div class="caixa">
+        <h1>Confirmar codigo</h1>
+
+        <!-- Formulário para entrada do código enviado ao usuário -->
+        <form class="form" id="formCodigoConta">   
+            
+            <label class="label" for="txtCodigo">Digite o código enviado para o e-mail: <span id="emailUsuario">XXXXX</span></label><br/>
+            <input class="input" id="txtCodigo" placeholder="Código" type="text" required><br/><br/>
+            <!-- Botão de confirmação -->
+            <button class="btn" id="btnProximo" type="submit">Avançar</button>
+
+        </form>
+    
+    </div>
+
+    <!-- Script de controle de fluxo (cadastro ou esqueci senha) -->
+    <script src="../js/confirmarCodigo.js"></script>    
+
+</body>
+</html>

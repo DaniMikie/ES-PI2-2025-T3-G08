@@ -1,0 +1,46 @@
+<!-- 
+    Autor: Gustavo Alves
+    Projeto: Projeto NotaDez
+    Arquivo: alteraçãoSenha.html
+    Data: 10/09/2025
+-->
+
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projeto NotaDez - Login</title>
+    
+    <!-- Importa o CSS -->
+    <link href="../styles/baseLogin.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body>
+    <div class="caixa">
+        <h1>Redefinir senha</h1>
+
+        <!-- Formulário para definir nova senha -->
+        <form class="form" id="formAlteracaoSenha"> 
+
+            <label class="label" for="txtSenha">Digite a nova senha</label><br/>
+            <input class="input" id="txtSenha" placeholder="Senha" type="text" required><br/><br/>
+
+            <label class="label" for="txtConfirmaSenha">Digite novamente a senha</label><br/>
+            <input class="input" id="txtConfirmaSenha" placeholder="Senha" type="password" required><br/><br/> 
+            
+            <p class="avisoSenha">A senha deve ter pelo menos 8 caracteres, <br/>incluindo uma letra maiúscula e uma minúscula.</p><br/><br/>
+
+            <!-- Aviso caso senhas nao sejam iguais -->
+            <p class="aviso">AS SENHAS DEVEM SER IGUAIS</p>
+            
+            <!-- Botão que confirma a redefinição -->
+            <button id="btnProximo" class="btn" type="submit" >Avançar</button>
+            
+        </form>
+    </div>
+    <!-- Script de validação da senha -->
+    <script src="../js/alteracaoSenha.js"></script>
+
+</body>
+</html>

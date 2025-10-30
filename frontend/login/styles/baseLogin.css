@@ -1,0 +1,263 @@
+/* 
+    Autor: Gustavo Alves
+    Projeto: Projeto NotaDez
+    Arquivo: baseLogin.css
+    Data: 10/09/2025
+*/
+
+/* 
+    Estilos globais do body 
+    - Centraliza todo o conteúdo no centro da tela (horizontal e vertical)
+    - Remove margens padrão
+    - Define altura mínima de 100% da tela
+    - Aplica cor de fundo clara
+*/
+body {
+    display: flex;
+    justify-content: center; 
+    align-items: center;    
+    min-height: 100vh;       
+    margin: 0;               
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f3f3f3; 
+}
+
+/* 
+    Caixa principal onde ficam os formulários
+    - Centraliza texto
+    - Define largura fixa
+    - Cria fundo branco com bordas arredondadas
+    - Aplica sombra para destaque
+*/
+.caixa {
+    text-align: center;
+    width: 350px;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+/* Espaçamento inferior entre formulários e outros elementos */
+.form {
+    margin-bottom: 20px;
+}
+
+/* 
+    Título principal (h1)
+    - Define tamanho da fonte
+    - Ajusta espaçamento das letras
+    - Reduz espaço no topo
+*/
+h1 {
+    font-size: 2.15em;
+    letter-spacing: -0.5px;
+    margin-top: 10px;
+}
+
+/* 
+    Estilo dos rótulos (label)
+    - Define espaçamento e tamanho da fonte
+    - Exibe cada label como bloco separado
+*/
+.label {
+    letter-spacing: 0.5px;
+    font-size: 1.1em;
+    display: block;
+    margin-bottom: -14px;
+}
+
+/* 
+    Campos de entrada (input)
+    - Define largura, altura e espaçamento interno
+    - Adiciona borda arredondada e remove outline padrão
+    - Transição na base para hover suave
+*/
+.input {
+    width: 230px;  
+    height: 16px;  
+    padding: 10px;
+    font-size: 16px;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+/* Hover para input VÁLIDO (azul) */
+.input:hover {
+    border-color: #007bff;
+    box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
+}
+
+/* Focus para input VÁLIDO (azul) */
+.input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 6px rgba(0, 123, 255, 0.5);
+}
+
+/* 
+    Campos de entrada com ERRO - ESTILO BASE
+    - Mesmo tamanho, mas borda vermelha
+    - Transição na base para hover suave
+*/
+.inputErrado {
+    width: 230px;  
+    height: 16px;  
+    padding: 10px;
+    font-size: 16px;
+    border: 2px solid #ff3e3e;
+    border-radius: 10px;
+    outline: none;
+    background-color: #ffebee; 
+    transition: all 0.2s ease;
+}
+
+/* Focus para input com ERRO */
+.inputErrado:focus {
+    border-color: #ff3e3e ;
+    box-shadow: 0 0 6px rgba(255, 62, 62, 0.5);
+    background-color: #ffebee;
+}
+
+/* 
+    Hover para input com ERRO 
+    - Aplica só se a classe inputErrado estiver presente
+    - Usa seletor composto (input + classe) para precedência alta
+*/
+.inputErrado:hover {
+    border-color: #dc3545;  
+    box-shadow: 0 0 6px rgba(220, 53, 69, 0.4); 
+    background-color: #ffcdd2; 
+}
+
+/* 
+    Botões principais
+    - Define tamanho, cor de fundo azul e texto branco
+    - Remove borda padrão
+    - Adiciona bordas arredondadas e efeito de cursor
+*/
+.btn {
+    width: 150px;
+    height: 30px;
+    background: #007BFF;
+    color: white;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    margin: 5px;
+    transition: all 0.3s ease;
+}
+
+/* Efeito hover nos botões: muda o tom de azul */
+.btn:hover {
+    background: #0056b3;
+}
+
+/* 
+    Botões desativados
+    - Define tamanho, cor de fundo cinza e texto branco
+    - Remove borda padrão
+    - Adiciona bordas arredondadas e efeito de cursor bloqueado
+    - adiciona opacidade, e uma transicao
+*/
+.btnDesativado {
+    width: 150px;
+    height: 30px;
+    background: #b0b0b0;       
+    color: white;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+    border: none;
+    border-radius: 20 px;
+    cursor: not-allowed;        
+    margin: 5px;
+    opacity: 0.6;               
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1); 
+    transition: all 0.3s ease;
+}
+
+.btnDesativado:hover {
+    background: #b0b0b0;        
+    color: #e0e0e0;
+}
+
+/* 
+    Link "Esqueci a senha"
+    - Alinhamento ajustado manualmente
+    - Fonte menor e cinza
+*/
+#esqueciSenha {
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    text-indent: -140px;
+    margin-top: -14px;
+    font-size: 0.8em;
+    font-weight: bold;
+    color: grey;
+}
+
+/* 
+    Efeito hover no "Esqueci a senha"
+    - Sublinhado
+    - Cursor em forma de mão
+    - Cor mais escura
+*/
+#esqueciSenha:hover {
+    text-decoration: underline;
+    cursor: pointer;
+    color: rgb(61, 61, 61);
+}
+
+/* 
+    Texto "Não é membro?"
+    - Fonte menor e em negrito
+    - Cor cinza
+*/
+#naoMembro {
+    margin-top: 10px;
+    font-size: 0.8em;
+    letter-spacing: -0.5px;
+    font-weight: bold;
+    color: grey;
+}
+
+/* 
+    Link "Criar conta"
+    - Sublinhado e com cursor em forma de mão
+*/
+#criarConta {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Efeito hover em "Criar conta": cor cinza escura */
+#criarConta:hover {
+    color: rgb(61, 61, 61);
+}
+
+/* Define o estilo dos avisos */
+.aviso {
+    font-size: 0.8em;
+    letter-spacing: -0.15px;
+    font-weight: 800;
+    color: #FF0000;
+    opacity: 75%;
+    font-style: italic;
+    display: none;
+}
+
+/* Define o estilo dos aviso de parão da senha */
+.avisoSenha {
+    margin: 0;
+    margin-bottom: -20px;
+    text-align: center;
+    margin-top: -14px;
+    font-size: 0.7em;
+    font-weight: bold;
+    font-style: italic;
+    color: grey;
+}
