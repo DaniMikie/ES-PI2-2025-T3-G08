@@ -79,12 +79,16 @@ function onInputKeyUp(_event) {
     }
 }
 
-// Quando o form for enviado
+// Quando o form do login for enviado
 form.addEventListener("submit", (event) => {
     // Impede o reload
     event.preventDefault();
 
+    // Envia o cadastro para o back e valida
+
     // Limpa os campos do formulário
     formLogin.reset();
+
+    // Se autenticado faz o login e vai para a dashboard
+    window.location.href='/frontend/dashboard/html/instituicoes.html'
 });
-   
