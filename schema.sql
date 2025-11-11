@@ -6,7 +6,7 @@
 --Autor: Daniela Mikie
 --Projeto: Projeto NotaDez
 --Arquivo: schema.sql
---Data: 26/10/2025
+--Data: 21/10/2025
 
 -- Criar banco de dados
 CREATE DATABASE IF NOT EXISTS notadezbd_final_teste CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -124,3 +124,4 @@ CREATE TABLE grade_audit (
 --SELECT*FROM grade_components;
 --SELECT*FROM grades;
 --SELECT*FROM grade_audit;
+
