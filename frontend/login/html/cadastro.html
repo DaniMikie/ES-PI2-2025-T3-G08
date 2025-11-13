@@ -1,0 +1,71 @@
+<!-- 
+    Autor: Gustavo Alves
+    Projeto: Projeto NotaDez
+    Arquivo: cadastro.html
+    Data: 10/09/2025
+-->
+
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projeto NotaDez - Login</title>
+
+    <!-- Importa o CSS -->
+    <link href="../styles/baseLogin.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body>
+    <div class="caixa">
+        <h1>Criar conta</h1>
+
+        <!-- Formulário de cadastro -->
+        <form class="form" id="formCadastro">  
+
+            <label class="label" for="txtNome">Digite o nome completo</label><br/>
+            <input class="input" id="txtNome" placeholder="Nome" type="text" required><br/><br/>
+
+            <label class="label" for="txtEmail">Digite o e-mail</label><br/>
+            <input class="input" id="txtEmail" placeholder="E-mail" type="text" required><br/><br/>
+
+            <label class="label" for="txtTelefone">Digite o Telefone</label><br/>
+            <input class="input" id="txtTelefone" placeholder="Telefone" type="tel" required><br/><br/>
+
+            <label class="label" for="txtSenha">Digite a senha</label><br/>
+            <input class="input" id="txtSenha" placeholder="Senha" type="text" required><br/><br/>
+
+            <label class="label" for="txtSenha">Confirme a senha</label><br/>
+            <input class="input" id="txtConfirmaSenha" placeholder="Senha" type="password" required><br/><br/>
+            <p class="avisoSenha">A senha deve ter pelo menos 8 caracteres, <br/>incluindo uma letra maiúscula e uma minúscula.</p><br/><br/>
+            <!-- Aviso caso os campos nao estejam preenchidos -->
+            <p class="aviso">TODOS OS CAMPOS SÃO OBRIGATÓRIOS</p>
+            
+            <!-- Botão que leva para a tela de confirmação de código -->
+            <button class="btn" id="btnProximo" type="submit" >Cadastrar</button>
+            
+        </form>
+
+        <!-- Link para voltar pro login -->
+        <p class="pergunta" style="margin-top: -10px;">Já é membro? 
+            <span class="fluxo" onclick="window.location.href='login.html'">Fazer login</span>
+        </p>
+
+    
+    </div>
+
+    <!-- Importação do Jquery mask -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" 
+    integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" 
+    crossorigin="anonymous" 
+    referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" 
+    integrity="sha512-pHVGpX7F/27yZ0ISY+VVjyULApbDlD0/X0rgGbTqCE7WFW5MezNTWG/dnhtbBuICzsd0WQPgpE4REBLv+UqChw==" 
+    crossorigin="anonymous" 
+    referrerpolicy="no-referrer"></script>
+
+    <!-- Script de controle do cadastro -->
+    <script src="../js/cadastro.js"></script>
+
+</body>
+</html>
