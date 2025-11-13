@@ -120,7 +120,7 @@ Configure as variáveis de ambiente no arquivo `.env`:
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=sua_senha
-DB_NAME=notadezbd_sem_token
+DB_NAME=notadezbd
 PORT=3000
 JWT_SECRET=chave_secreta_segura
 EMAIL_USER=seu_email@gmail.com
@@ -293,3 +293,4 @@ PUC-Campinas
 ## Licença
 
 Este projeto é parte do Projeto Integrador II do curso de Engenharia de Software da PUC-Campinas, desenvolvido no ano de 2025.
+
