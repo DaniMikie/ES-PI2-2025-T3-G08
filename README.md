@@ -264,27 +264,6 @@ npm run build
 npm test
 ```
 
-### Estrutura de Commits
-
-O projeto segue o padrão de commits semânticos:
-
-- `feat`: Nova funcionalidade
-- `fix`: Correção de bug
-- `docs`: Documentação
-- `style`: Formatação
-- `refactor`: Refatoração de código
-- `test`: Testes
-- `chore`: Tarefas de manutenção
-
-## Notas Técnicas
-
-- O frontend utiliza localStorage para persistência do token JWT
-- As notas são formatadas com 2 casa decimal
-- O sistema suporta fórmulas matemáticas complexas para cálculo de médias
-- Importação CSV aceita separador ponto-e-vírgula (;)
-- Exportação CSV remove acentuação automaticamente
-- Sistema de confirmação dupla para ações destrutivas (exclusão, logout)
-
 ## Autores
 
 Gustavo Alves  
