@@ -279,7 +279,7 @@ O projeto segue o padrão de commits semânticos:
 ## Notas Técnicas
 
 - O frontend utiliza localStorage para persistência do token JWT
-- As notas são formatadas com 1 casa decimal
+- As notas são formatadas com 2 casa decimal
 - O sistema suporta fórmulas matemáticas complexas para cálculo de médias
 - Importação CSV aceita separador ponto-e-vírgula (;)
 - Exportação CSV remove acentuação automaticamente
@@ -288,6 +288,8 @@ O projeto segue o padrão de commits semânticos:
 ## Autores
 
 Gustavo Alves  
+Daniela Mikie
+Pedro Bellinetti
 Equipe PI II - Engenharia de Software  
 PUC-Campinas
 
