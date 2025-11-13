@@ -9,20 +9,20 @@ O NotaDez é uma plataforma web para gerenciamento acadêmico que permite o cont
 ## Tecnologias Utilizadas
 
 ### Backend
-- Node.js v14+
+- Node.js 
 - TypeScript
 - Express.js
-- MySQL 5.7+
+- MySQL 
 - JWT (JSON Web Tokens)
 - bcryptjs
 - Nodemailer
 
 ### Frontend
-- HTML5
-- CSS3
-- JavaScript (ES6+)
-- Bootstrap 5.3
-- jQuery 3.7
+- HTML
+- CSS
+- JavaScript 
+- Bootstrap 
+- jQuery
 - jQuery Mask Plugin
 
 ## Arquitetura do Sistema
@@ -293,4 +293,5 @@ PUC-Campinas
 ## Licença
 
 Este projeto é parte do Projeto Integrador II do curso de Engenharia de Software da PUC-Campinas, desenvolvido no ano de 2025.
+
 
