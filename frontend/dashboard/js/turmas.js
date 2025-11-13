@@ -30,7 +30,7 @@ $(document).ready(function () {
   const disciplina = urlParams.get('disciplina');
   const subjectId = urlParams.get('subjectId');
 
-  // Monta breadcrumb de navegação (Instituição > Curso > Disciplina)
+  // ======== BREADCRUMB: Monta navegação (Instituição > Curso > Disciplina) ========
   async function carregarBreadcrumb() {
     if (!subjectId) {
       document.querySelector('#msgDisciplina').textContent = 'Disciplina não informada';
@@ -38,7 +38,7 @@ $(document).ready(function () {
     }
 
     try {
-      // Busca dados da disciplina
+      // BREADCRUMB PASSO 1: Busca dados da disciplina pelo ID
       const subjectResponse = await fetch(`${API_URL}/subjects/${subjectId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -46,7 +46,7 @@ $(document).ready(function () {
       if (subjectResponse.ok) {
         const subject = await subjectResponse.json();
 
-        // Busca dados do curso
+        // BREADCRUMB PASSO 2: Busca dados do curso usando course_id da disciplina
         const courseResponse = await fetch(`${API_URL}/courses/${subject.course_id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -54,7 +54,7 @@ $(document).ready(function () {
         if (courseResponse.ok) {
           const course = await courseResponse.json();
 
-          // Busca dados da instituição
+          // BREADCRUMB PASSO 3: Busca dados da instituição usando institution_id do curso
           const instResponse = await fetch(`${API_URL}/institutions/${course.institution_id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
@@ -62,12 +62,13 @@ $(document).ready(function () {
           if (instResponse.ok) {
             const institution = await instResponse.json();
 
-            // Monta o breadcrumb com links clicáveis
+            // BREADCRUMB PASSO 4: Monta o HTML do breadcrumb com links clicáveis
             const breadcrumb = `
               <a href="instituicoes.html" class="breadcrumb-link">${institution.name}</a> > 
               <a href="disciplinas.html?curso=${encodeURIComponent(course.name)}&courseId=${course.id}" class="breadcrumb-link">${course.name}</a> > 
               <span class="breadcrumb-atual">${disciplina}</span>
             `;
+            // BREADCRUMB PASSO 5: Exibe o breadcrumb na tela
             document.querySelector('#msgDisciplina').innerHTML = `<small>${breadcrumb}</small>`;
           }
         }
@@ -78,6 +79,7 @@ $(document).ready(function () {
     }
   }
 
+  // Executa a função para carregar o breadcrumb
   carregarBreadcrumb();
 
   // Captura os elementos do HTML pelo ID
