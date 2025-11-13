@@ -1,4 +1,5 @@
-# Projeto NotaDez - Sistema de Gerenciamento de Notas Acadêmicas
+# Projeto NotaDez - Sistema de Gerenciamento de Notas Acadêmicas 
+# ES-PI2-2025-T3-G08
 
 Sistema completo de gerenciamento de notas acadêmicas desenvolvido com arquitetura cliente-servidor, utilizando Node.js/TypeScript no backend e HTML/CSS/JavaScript no frontend.
 
