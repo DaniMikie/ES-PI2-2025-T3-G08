@@ -107,7 +107,7 @@ form.addEventListener("submit", async (event) => {
 
             // Redireciona para dashboard
             formLogin.reset();
-            window.location.href = '/ES-PI2-2025-T3-G08/frontend/dashboard/html/dashboard.html';
+            window.location.href = '/frontend/dashboard/html/dashboard.html';
         } else {
             // Exibe mensagem de erro
             mensagem.textContent = data.error || 'Erro ao fazer login';

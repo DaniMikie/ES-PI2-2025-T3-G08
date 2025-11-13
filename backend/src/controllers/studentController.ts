@@ -51,3 +51,19 @@ export async function remove(req: Request, res: Response) {
     res.status(400).json({ error: error.message });
   }
 }
+
+export async function exportCSV(req: Request, res: Response) {
+  const { classId } = req.params;
+
+  try {
+    const csvContent = await studentService.exportStudentsCSV(Number(classId));
+    
+    // Define headers para download do arquivo CSV
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename=alunos_turma_${classId}_${new Date().toISOString().split('T')[0]}.csv`);
+    
+    res.status(200).send(csvContent);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+}

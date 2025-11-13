@@ -33,25 +33,27 @@ export async function registerUser(name: string, email: string, phone: string, p
     throw new Error("O nome deve conter apenas letras e espaços.");
   }
 
-  // Validação: email deve ser válido
+  // Validação: email deve ser válido 
   if (!email || email.trim().length === 0) {
     throw new Error("O email não pode estar vazio.");
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[^\s]+@[^\s]+\.[^\s]+$/;
   if (!emailRegex.test(email)) {
     throw new Error("Email inválido.");
   }
 
-  // Validação: telefone deve ter formato válido (apenas números, 10 ou 11 dígitos)
+  // Validação: telefone deve ter formato (00) 00000-0000 
   if (!phone || phone.trim().length === 0) {
     throw new Error("O telefone não pode estar vazio.");
   }
 
-  const phoneClean = phone.replace(/\D/g, ''); // Remove caracteres não numéricos
-  if (phoneClean.length < 10 || phoneClean.length > 11) {
-    throw new Error("Telefone inválido. Deve ter 10 ou 11 dígitos.");
+  const phoneRegex = /^\(\d{2}\) \d{5}-\d{4}$/;
+  if (!phoneRegex.test(phone)) {
+    throw new Error("Telefone inválido. Use o formato (00) 00000-0000.");
   }
+
+  const phoneClean = phone.replace(/\D/g, ''); // Remove caracteres não numéricos para salvar
 
   // Validação: senha deve ter no mínimo 8 caracteres, 1 maiúscula e 1 minúscula
   if (!password || password.length < 8) {

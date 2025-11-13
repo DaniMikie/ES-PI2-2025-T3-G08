@@ -30,7 +30,7 @@ $(document).ready(function () {
   const curso = urlParams.get('curso');
   const courseId = urlParams.get('courseId');
 
-  // Monta breadcrumb de navegação (Instituição > Curso)
+  // ======== BREADCRUMB: Monta navegação (Instituição > Curso) ========
   async function carregarBreadcrumb() {
     if (!courseId) {
       document.querySelector('#msgCurso').textContent = 'Curso não informado';
@@ -38,7 +38,7 @@ $(document).ready(function () {
     }
 
     try {
-      // Busca dados do curso
+      // BREADCRUMB PASSO 1: Busca dados do curso pelo ID
       const courseResponse = await fetch(`${API_URL}/courses/${courseId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -46,7 +46,7 @@ $(document).ready(function () {
       if (courseResponse.ok) {
         const course = await courseResponse.json();
 
-        // Busca dados da instituição
+        // BREADCRUMB PASSO 2: Busca dados da instituição usando institution_id do curso
         const instResponse = await fetch(`${API_URL}/institutions/${course.institution_id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -54,11 +54,12 @@ $(document).ready(function () {
         if (instResponse.ok) {
           const institution = await instResponse.json();
 
-          // Monta o breadcrumb com links clicáveis
+          // BREADCRUMB PASSO 3: Monta o HTML do breadcrumb com links clicáveis
           const breadcrumb = `
             <a href="instituicoes.html" class="breadcrumb-link">${institution.name}</a> > 
             <span class="breadcrumb-atual">${curso}</span>
           `;
+          // BREADCRUMB PASSO 4: Exibe o breadcrumb na tela
           document.querySelector('#msgCurso').innerHTML = `<small>${breadcrumb}</small>`;
         }
       }
@@ -68,6 +69,7 @@ $(document).ready(function () {
     }
   }
 
+  // Executa a função para carregar o breadcrumb
   carregarBreadcrumb();
 
   // Captura elementos do formulário e tabela

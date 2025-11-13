@@ -12,13 +12,18 @@ import { executeQuery, executeTransaction } from "../db/database";
  * courseName - Nome do curso
  */
 export async function createInstitution(userId: number, institutionName: string, courseName: string) {
-  // Validação: nomes não podem estar vazios
+  // Validação: nome da instituição não pode estar vazio
   if (!institutionName || institutionName.trim().length === 0) {
     throw new Error("O nome da instituição não pode estar vazio.");
   }
 
+  // Validação: nome do curso não pode estar vazio e deve conter apenas letras, números e espaços 
   if (!courseName || courseName.trim().length === 0) {
     throw new Error("O nome do curso não pode estar vazio.");
+  }
+
+  if (!/^[a-zA-Z0-9 ]+$/.test(courseName)) {
+    throw new Error("O nome do curso deve conter apenas letras, números e espaços.");
   }
 
   // Verifica duplicata de instituição para o usuário
@@ -96,13 +101,18 @@ export async function getInstitution(institutionId: number) {
  * courseName - Novo nome do curso
  */
 export async function updateInstitution(institutionId: number, userId: number, institutionName: string, courseName: string) {
-  // Validação: nomes não podem estar vazios
+  // Validação: nome da instituição não pode estar vazio
   if (!institutionName || institutionName.trim().length === 0) {
     throw new Error("O nome da instituição não pode estar vazio.");
   }
 
+  // Validação: nome do curso não pode estar vazio e deve conter apenas letras, números e espaços 
   if (!courseName || courseName.trim().length === 0) {
     throw new Error("O nome do curso não pode estar vazio.");
+  }
+
+  if (!/^[a-zA-Z0-9 ]+$/.test(courseName)) {
+    throw new Error("O nome do curso deve conter apenas letras, números e espaços.");
   }
 
   // Verifica se a instituição pertence ao usuário

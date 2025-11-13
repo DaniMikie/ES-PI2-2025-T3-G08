@@ -12,11 +12,16 @@ import { executeQuery } from "../db/database";
  * code - Código da turma
  */
 export async function createClass(subjectId: number, name: string, code: string) {
-  // Validação: campos obrigatórios não podem estar vazios
+  // Validação: nome não pode estar vazio e deve conter apenas letras, números e espaços (máscara frontend)
   if (!name || name.trim().length === 0) {
     throw new Error("O nome da turma não pode estar vazio.");
   }
 
+  if (!/^[a-zA-Z0-9 ]+$/.test(name)) {
+    throw new Error("O nome da turma deve conter apenas letras, números e espaços.");
+  }
+
+  // Validação: código não pode estar vazio
   if (!code || code.trim().length === 0) {
     throw new Error("O código da turma não pode estar vazio.");
   }
@@ -64,11 +69,16 @@ export async function getClasses(subjectId: number) {
  * code - Novo código
  */
 export async function updateClass(classId: number, name: string, code: string) {
-  // Validação: campos obrigatórios não podem estar vazios
+  // Validação: nome não pode estar vazio e deve conter apenas letras, números e espaços (máscara frontend)
   if (!name || name.trim().length === 0) {
     throw new Error("O nome da turma não pode estar vazio.");
   }
 
+  if (!/^[a-zA-Z0-9 ]+$/.test(name)) {
+    throw new Error("O nome da turma deve conter apenas letras, números e espaços.");
+  }
+
+  // Validação: código não pode estar vazio
   if (!code || code.trim().length === 0) {
     throw new Error("O código da turma não pode estar vazio.");
   }

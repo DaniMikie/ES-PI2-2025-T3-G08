@@ -14,21 +14,40 @@ import { executeQuery } from "../db/database";
  * semester - Semestre (ex: "1° Semestre")
  */
 export async function createSubject(courseId: number, name: string, code: string, abbreviation: string, semester: string) {
-  // Validação: campos obrigatórios não podem estar vazios
+  // Validação: nome não pode estar vazio e deve conter apenas letras, números e espaços
   if (!name || name.trim().length === 0) {
     throw new Error("O nome da disciplina não pode estar vazio.");
   }
 
-  if (!code || code.trim().length === 0) {
-    throw new Error("O código da disciplina não pode estar vazio.");
+  if (!/^[a-zA-Z0-9 ]+$/.test(name)) {
+    throw new Error("O nome da disciplina deve conter apenas letras, números e espaços.");
   }
 
-  if (!abbreviation || abbreviation.trim().length === 0) {
-    throw new Error("A sigla da disciplina não pode estar vazia.");
+  // Validação: código deve ter exatamente 5 dígitos (máscara: 00000)
+  if (!code || !/^\d{5}$/.test(code)) {
+    throw new Error("O código da disciplina deve ter exatamente 5 dígitos.");
   }
 
+  // Validação: sigla deve ter 2-4 caracteres alfanuméricos (máscara: slice(0,4))
+  if (!abbreviation || abbreviation.trim().length < 2 || abbreviation.trim().length > 4) {
+    throw new Error("A sigla da disciplina deve ter entre 2 e 4 caracteres.");
+  }
+
+  if (!/^[a-zA-Z0-9]+$/.test(abbreviation)) {
+    throw new Error("A sigla da disciplina deve conter apenas letras e números.");
+  }
+
+  // Validação: semestre deve ser um número de 1 a 12 (máscara: número + "° Semestre")
   if (!semester || semester.trim().length === 0) {
     throw new Error("O semestre não pode estar vazio.");
+  }
+
+  // Remove o texto "° Semestre" se vier do frontend
+  const semesterNumber = semester.replace(/°\s*Semestre/gi, '').trim();
+  const num = parseInt(semesterNumber, 10);
+  
+  if (isNaN(num) || num < 1 || num > 12) {
+    throw new Error("O semestre deve ser um número entre 1 e 12.");
   }
 
   // Verifica duplicata de código no mesmo curso
@@ -95,21 +114,40 @@ export async function getSubject(subjectId: number) {
  * semester - Novo semestre
  */
 export async function updateSubject(subjectId: number, name: string, code: string, abbreviation: string, semester: string) {
-  // Validação: campos obrigatórios não podem estar vazios
+  // Validação: nome não pode estar vazio e deve conter apenas letras, números e espaços
   if (!name || name.trim().length === 0) {
     throw new Error("O nome da disciplina não pode estar vazio.");
   }
 
-  if (!code || code.trim().length === 0) {
-    throw new Error("O código da disciplina não pode estar vazio.");
+  if (!/^[a-zA-Z0-9 ]+$/.test(name)) {
+    throw new Error("O nome da disciplina deve conter apenas letras, números e espaços.");
   }
 
-  if (!abbreviation || abbreviation.trim().length === 0) {
-    throw new Error("A sigla da disciplina não pode estar vazia.");
+  // Validação: código deve ter exatamente 5 dígitos (máscara: 00000)
+  if (!code || !/^\d{5}$/.test(code)) {
+    throw new Error("O código da disciplina deve ter exatamente 5 dígitos.");
   }
 
+  // Validação: sigla deve ter 2-4 caracteres alfanuméricos (máscara: slice(0,4))
+  if (!abbreviation || abbreviation.trim().length < 2 || abbreviation.trim().length > 4) {
+    throw new Error("A sigla da disciplina deve ter entre 2 e 4 caracteres.");
+  }
+
+  if (!/^[a-zA-Z0-9]+$/.test(abbreviation)) {
+    throw new Error("A sigla da disciplina deve conter apenas letras e números.");
+  }
+
+  // Validação: semestre deve ser um número de 1 a 12 (máscara: número + "° Semestre")
   if (!semester || semester.trim().length === 0) {
     throw new Error("O semestre não pode estar vazio.");
+  }
+
+  // Remove o texto "° Semestre" se vier do frontend
+  const semesterNumber = semester.replace(/°\s*Semestre/gi, '').trim();
+  const num = parseInt(semesterNumber, 10);
+  
+  if (isNaN(num) || num < 1 || num > 12) {
+    throw new Error("O semestre deve ser um número entre 1 e 12.");
   }
 
   // Busca o curso da disciplina

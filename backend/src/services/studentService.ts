@@ -17,8 +17,8 @@ export async function createStudent(classId: number, studentId: string, name: st
     throw new Error("RA inválido. Deve conter exatamente 8 dígitos.");
   }
 
-  // Validação do nome: apenas letras e espaços
-  if (!/^[A-Za-zÀ-ÿ\s]+$/.test(name) || name.trim().length === 0) {
+  // Validação do nome: apenas letras 
+  if (!/^[A-Za-z\s]+$/.test(name) || name.trim().length === 0) {
     throw new Error("Nome inválido. Deve conter apenas letras e espaços.");
   }
 
@@ -70,8 +70,8 @@ export async function updateStudent(id: number, studentId: string, name: string)
     throw new Error("RA inválido. Deve conter exatamente 8 dígitos.");
   }
 
-  // Validação do nome: apenas letras e espaços
-  if (!/^[A-Za-zÀ-ÿ\s]+$/.test(name) || name.trim().length === 0) {
+  // Validação do nome: apenas letras e espaços 
+  if (!/^[A-Za-z\s]+$/.test(name) || name.trim().length === 0) {
     throw new Error("Nome inválido. Deve conter apenas letras e espaços.");
   }
 
@@ -131,4 +131,32 @@ export async function deleteStudent(id: number, userId: number) {
   // Exclui o aluno (CASCADE vai excluir as notas automaticamente)
   await executeQuery("DELETE FROM students WHERE id = ?", [id]);
   return { success: true };
+}
+
+/**
+ * Exporta alunos de uma turma em formato CSV
+ * classId - ID da turma
+ */
+export async function exportStudentsCSV(classId: number) {
+  // Busca os alunos da turma ordenados por nome
+  const students = await executeQuery(
+    "SELECT student_id, name FROM students WHERE class_id = ? ORDER BY name",
+    [classId]
+  );
+
+  // Função para remover acentos
+  const removerAcentos = (texto: string) => {
+    return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  };
+
+  // Monta o CSV
+  const linhas = ['RA;Nome'];
+  
+  students.forEach((student: any) => {
+    const ra = student.student_id;
+    const nome = removerAcentos(student.name);
+    linhas.push(`${ra};${nome}`);
+  });
+
+  return linhas.join('\n');
 }

@@ -31,7 +31,7 @@ $(document).ready(function () {
     const classId = urlParams.get('classId');
     const subjectId = urlParams.get('subjectId');
 
-    // Monta breadcrumb de navegação (Instituição > Curso > Disciplina > Turma)
+    // ======== BREADCRUMB: Monta navegação (Instituição > Curso > Disciplina > Turma) ========
     async function carregarBreadcrumb() {
         if (!subjectId || !classId) {
             document.querySelector('#msgTurma').textContent = 'Turma não informada';
@@ -39,7 +39,7 @@ $(document).ready(function () {
         }
 
         try {
-            // Busca dados da disciplina
+            // BREADCRUMB PASSO 1: Busca dados da disciplina pelo ID
             const subjectResponse = await fetch(`${API_URL}/subjects/${subjectId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -47,7 +47,7 @@ $(document).ready(function () {
             if (subjectResponse.ok) {
                 const subject = await subjectResponse.json();
 
-                // Busca dados do curso
+                // BREADCRUMB PASSO 2: Busca dados do curso usando course_id da disciplina
                 const courseResponse = await fetch(`${API_URL}/courses/${subject.course_id}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -55,7 +55,7 @@ $(document).ready(function () {
                 if (courseResponse.ok) {
                     const course = await courseResponse.json();
 
-                    // Busca dados da instituição
+                    // BREADCRUMB PASSO 3: Busca dados da instituição usando institution_id do curso
                     const instResponse = await fetch(`${API_URL}/institutions/${course.institution_id}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -63,13 +63,14 @@ $(document).ready(function () {
                     if (instResponse.ok) {
                         const institution = await instResponse.json();
 
-                        // Monta o breadcrumb com links clicáveis
+                        // BREADCRUMB PASSO 4: Monta o HTML do breadcrumb com links clicáveis
                         const breadcrumb = `
                             <a href="instituicoes.html" class="breadcrumb-link">${institution.name}</a> <span style="color: #616161;">></span> 
                             <a href="disciplinas.html?curso=${encodeURIComponent(course.name)}&courseId=${course.id}" class="breadcrumb-link">${course.name}</a> <span style="color: #616161;">></span> 
                             <a href="turmas.html?disciplina=${encodeURIComponent(subject.name)}&subjectId=${subject.id}" class="breadcrumb-link">${subject.name}</a> <span style="color: #616161;">></span> 
                             <span class="breadcrumb-atual">${turma}</span>
                         `;
+                        // BREADCRUMB PASSO 5: Exibe o breadcrumb na tela
                         document.querySelector('#msgTurma').innerHTML = `<small>${breadcrumb}</small>`;
                     }
                 }
@@ -80,6 +81,7 @@ $(document).ready(function () {
         }
     }
 
+    // Executa a função para carregar o breadcrumb
     carregarBreadcrumb();
 
     // Captura os elementos do HTML pelo ID
@@ -1576,42 +1578,41 @@ $(document).ready(function () {
         alert(mensagem);
     }
 
-    // Botão Exportar CSV
-    // Função para remover acentos
-    function removerAcentos(texto) {
-        return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    }
+    // Botão Exportar CSV - Busca dados do backend
+    btnExportarCSV.addEventListener("click", async () => {
+        try {
+            // Faz requisição ao backend para exportar CSV
+            const response = await fetch(`${API_URL}/students/class/${classId}/export`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
 
-    btnExportarCSV.addEventListener("click", () => {
-        const linhas = [];
+            if (!response.ok) {
+                throw new Error('Erro ao exportar CSV');
+            }
 
-        // Monta o cabeçalho apenas com RA e Nome
-        let cabecalho = 'RA;Nome';
-        linhas.push(cabecalho);
+            // Recebe o conteúdo CSV do backend
+            const csvContent = await response.text();
 
-        // Adiciona cada aluno apenas com RA e Nome
-        document.querySelectorAll("#tabelaAlunos tbody tr").forEach(linha => {
-            const ra = linha.querySelector(".ra").value.trim();
-            const nome = removerAcentos(linha.querySelector(".nome").value.trim());
+            // Cria o blob e faz o download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
 
-            let linhaCSV = `${ra};${nome}`;
+            link.setAttribute('href', url);
+            link.setAttribute('download', `alunos_${turma}_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
 
-            linhas.push(linhaCSV);
-        });
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
 
-        // Cria o arquivo CSV
-        const csvContent = linhas.join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-
-        link.setAttribute('href', url);
-        link.setAttribute('download', `alunos_${turma}_${new Date().toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
-
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Erro ao exportar CSV:', error);
+            alert('Erro ao exportar CSV. Tente novamente.');
+        }
     });
 
 });
