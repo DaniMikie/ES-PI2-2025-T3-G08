@@ -7,6 +7,19 @@ body {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+/* Logo do projeto */
+.logo-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background-color: #0d6efd;
+    border-radius: 6px;
+    color: white;
+    font-size: 16px;
+}
+
 .navbar.fixed-top {
     height: 56px; /* altura padrão navbar bootstrap */
     position: fixed;
@@ -21,7 +34,7 @@ body {
     position: fixed;
     top: 56px; /* abaixo da navbar fixa */
     left: 0;
-    width: 200px;
+    width: 240px;
     height: calc(100vh - 56px);
     background-color: #fff;
     padding-top: 1rem;
@@ -53,9 +66,14 @@ body {
 
 /* Conteúdo com margem lateral para a sidebar fixa */
 .content {
-    margin-left: 227.5px;
+    margin-left: 250px;
     margin-top: 56px;
-    padding: 3rem;
+    padding-left: 3rem;
+    padding-right: 3rem;
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+    width: calc(100vw - 250px);
+    box-sizing: border-box;
 }
 
 @media (max-width: 1200px) {
@@ -179,7 +197,7 @@ body {
 }
 
 .nota {
-    width: 47.5px;     
+    width: 50px;     
     text-align: center;
 }
 
@@ -191,20 +209,29 @@ body {
 
 
 .btn-editar-nota {
+    width: 25px;
+    min-width: 25px;
+    height: 25px;
     aspect-ratio: 1/1;
-    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 12px;
     padding: 2.5px;
+    margin-left: -7.5px;
 }
 
-.divBotaoNota, #divBtnFechar {
+.divBotaoeTitulo, #divBtnFechar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 10px;
+}
+
+#btnEditarTodos, #btnNota, #btnImportarCSV, #btnExportarCSV {
+    font-size: 0.75em;
+    font-weight: 600;
+    margin-left: 5px;
 }
 
 /* Estilos para o modal */
@@ -230,4 +257,21 @@ body {
 
 .modal-body {
   padding: 2rem; /* Padding interno maior para espaço ao redor do conteúdo */
+}
+
+/* Estilos para o breadcrumb navegável */
+.breadcrumb-link {
+    color: #616161;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.breadcrumb-link:hover {
+    color: #007bff;
+    text-decoration: underline;
+}
+
+.breadcrumb-atual {
+    color: #007bff;
+    text-decoration: underline;
 }

@@ -1,23 +1,84 @@
 /* 
     Autor: Gustavo Alves
     Projeto: Projeto NotaDez
-    Arquivo: turmas.js
+    Arquivo: turmas.js (Integrado com Backend)
     Data: 09/10/2025
 */
 
+// URL base da API
+const API_URL = 'http://localhost:3000/api';
+
 $(document).ready(function () {
 
-  // Recebe a query string da URL atual
+  // Verifica autenticação do usuário
+  const token = localStorage.getItem('token');
+  const userName = localStorage.getItem('userName');
+
+  // Redireciona para login se não houver token
+  if (!token) {
+    window.location.href = '/frontend/login/html/login.html';
+    return;
+  }
+
+  // Exibe nome do usuário na navbar
+  if (userName) {
+    $('.navbar .text-muted').html(`Olá, <strong>${userName}</strong>!`);
+  }
+
+  // Recupera informações da disciplina pela URL
   const urlParams = new URLSearchParams(window.location.search);
   const disciplina = urlParams.get('disciplina');
+  const subjectId = urlParams.get('subjectId');
 
-  // Exibe a disciplina na tela para o usuário
-  if (disciplina) {
-    document.querySelector('#msgDisciplina').textContent = `Disciplina: ${disciplina}`;
+  // Monta breadcrumb de navegação (Instituição > Curso > Disciplina)
+  async function carregarBreadcrumb() {
+    if (!subjectId) {
+      document.querySelector('#msgDisciplina').textContent = 'Disciplina não informada';
+      return;
+    }
+
+    try {
+      // Busca dados da disciplina
+      const subjectResponse = await fetch(`${API_URL}/subjects/${subjectId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (subjectResponse.ok) {
+        const subject = await subjectResponse.json();
+
+        // Busca dados do curso
+        const courseResponse = await fetch(`${API_URL}/courses/${subject.course_id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (courseResponse.ok) {
+          const course = await courseResponse.json();
+
+          // Busca dados da instituição
+          const instResponse = await fetch(`${API_URL}/institutions/${course.institution_id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+
+          if (instResponse.ok) {
+            const institution = await instResponse.json();
+
+            // Monta o breadcrumb com links clicáveis
+            const breadcrumb = `
+              <a href="instituicoes.html" class="breadcrumb-link">${institution.name}</a> > 
+              <a href="disciplinas.html?curso=${encodeURIComponent(course.name)}&courseId=${course.id}" class="breadcrumb-link">${course.name}</a> > 
+              <span class="breadcrumb-atual">${disciplina}</span>
+            `;
+            document.querySelector('#msgDisciplina').innerHTML = `<small>${breadcrumb}</small>`;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar breadcrumb:', error);
+      document.querySelector('#msgDisciplina').textContent = `Disciplina: ${disciplina}`;
+    }
   }
-  else {
-    document.querySelector('#msgDisciplina').textContent = 'Disciplina não informado';
-  }
+
+  carregarBreadcrumb();
 
   // Captura os elementos do HTML pelo ID
   const btnCadastrar = document.querySelector("#btnCadastrar");
@@ -29,21 +90,73 @@ $(document).ready(function () {
 
   // Máscara para o nome da turma, permite letras, números e espaços
   $('#nomeTurma').on('input', function () {
-    // Remove tudo que não for letra, número ou espaço
     let val = $(this).val().replace(/[^a-zA-Z0-9 ]/g, '');
-
     $(this).val(val);
   });
 
   // Variáveis para verificar oo botoes excluir e salvar
   let botaoExcluir = null;
+  let botaoSair = null;
   let linhaEditando = null;
-
-  // Variável para armazenar valores originais durante edição
   let valoresOriginaisLinha = null;
 
   // Desabilita o botão de salvar
   btnCadastrar.disabled = true;
+
+  // ======== CARREGAR TURMAS ========
+  async function carregarTurmas() {
+    if (!subjectId) return;
+
+    try {
+      const response = await fetch(`${API_URL}/classes/subject/${subjectId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const classes = await response.json();
+        tabela.querySelector("tbody").innerHTML = '';
+
+        // Carrega turmas uma por uma para buscar quantidade de alunos
+        for (const cls of classes) {
+          await adicionarLinhaTabela(cls.id, cls.name);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar turmas:', error);
+    }
+  }
+
+  async function adicionarLinhaTabela(id, nome) {
+    const novaLinha = document.createElement("tr");
+    novaLinha.dataset.classId = id;
+
+    // Busca a quantidade de alunos
+    let qtdAlunos = 0;
+    try {
+      const response = await fetch(`${API_URL}/students/class/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const students = await response.json();
+        qtdAlunos = students.length;
+      }
+    } catch (error) {
+      console.error('Erro ao buscar alunos:', error);
+    }
+
+    novaLinha.innerHTML = `
+      <td><input type="text" value="${nome}" disabled class="nomeTurma form-control form-control-sm"></td>
+      <td class="text-center"><span class="badge bg-primary">${qtdAlunos}</span></td>
+      <td class="text-center">
+        <button class="btn-ver btn btn-sm btn-outline-primary me-2">Ver turma</button>
+        <button class="btn-editar btn btn-sm btn-outline-secondary me-2">Editar</button>
+        <button class="btn-excluir btn btn-sm btn-outline-danger me-2">Excluir</button>
+      </td>
+    `;
+    tabela.querySelector("tbody").appendChild(novaLinha);
+  }
+
+  carregarTurmas();
 
   // Adiciona eventos para detectar quando o usuário digita nos inputs
   nomeTurma.onkeyup = onInputKeyUp;
@@ -57,7 +170,7 @@ $(document).ready(function () {
       const nomeExistente = $(this).find('td').eq(0).find('input').val().trim().toUpperCase();
       if (nomeExistente === nomeUpper) {
         existe = true;
-        return false; // interrompe o loop each
+        return false;
       }
     });
 
@@ -89,39 +202,48 @@ $(document).ready(function () {
   }
 
   // Cria um novo elemento na tabela
-  formTurma.addEventListener("submit", (event) => {
-    event.preventDefault(); // Impede o comportamento padrão de envio do formulário
+  formTurma.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
     const nome = nomeTurma.value.trim();
 
     if (nome === "") return;
 
-    // Cria uma nova linha na tabela
-    const novaLinha = document.createElement("tr");
+    try {
+      const response = await fetch(`${API_URL}/classes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          subjectId: parseInt(subjectId),
+          name: nome,
+          code: nome // Usando o nome como código também
+        })
+      });
 
-    // Monta células iniciais
-    novaLinha.innerHTML = `
-    <td><input type="text" value="${nome}" disabled class="nomeTurma form-control form-control-sm"></td>
-    <td class="text-center">
-    <button class="btn-ver btn btn-sm btn-outline-primary me-2">Ver turma</button>
-    <button class="btn-editar btn btn-sm btn-outline-secondary me-2">Editar</button>
-    <button class="btn-excluir btn btn-sm btn-outline-danger me-2">Excluir</button>
-    </td>
-    `;
-
-    tabela.querySelector("tbody").appendChild(novaLinha);
-
-    formTurma.reset();
-    btnCadastrar.disabled = true;
+      if (response.ok) {
+        const data = await response.json();
+        adicionarLinhaTabela(data.id, nome);
+        formTurma.reset();
+        btnCadastrar.disabled = true;
+      } else {
+        alert('Erro ao cadastrar turma');
+      }
+    } catch (error) {
+      console.error('Erro:', error);
+      alert('Erro ao conectar com o servidor');
+    }
   });
 
   // Evento para manipular cliques na tabela "editar"
-  tabela.addEventListener("click", (event) => {
+  tabela.addEventListener("click", async (event) => {
     const btn = event.target;
 
     // BOTÃO DE EDITAR LINHA TODA
     if (btn.classList.contains("btn-editar")) {
-      event.stopPropagation(); // evita cancelamento imediato ao clicar fora
+      event.stopPropagation();
 
       const linha = btn.closest("tr");
       const inputNome = linha.querySelector("input.nomeTurma");
@@ -129,27 +251,52 @@ $(document).ready(function () {
 
       const salvando = btn.textContent === "Salvar";
 
-      // Se já existe uma linha em edição e o usuário tenta editar outra
       if (!salvando && linhaEditando && linhaEditando !== linha) {
         alert("Conclua ou cancele a edição atual antes de editar outra linha.");
         return;
       }
 
       if (salvando) {
-        // ----- SALVAR -----
-        inputNome.disabled = true;
-        btnVer.disabled = false;
+        const classId = linha.dataset.classId;
+        const novoNome = inputNome.value.trim();
 
-        btn.textContent = "Editar";
-        btn.classList.remove("btn-success");
-        btn.classList.add("btn-outline-secondary");
-        linhaEditando = null; // nenhuma linha em edição
-        valoresOriginaisLinha = null;
+        try {
+          const response = await fetch(`${API_URL}/classes/${classId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              name: novoNome,
+              code: novoNome
+            })
+          });
 
+          if (response.ok) {
+            inputNome.disabled = true;
+            btnVer.disabled = false;
+
+            btn.textContent = "Editar";
+            btn.classList.remove("btn-success");
+            btn.classList.add("btn-outline-secondary");
+
+            // Reabilita todos os botões
+            tabela.querySelectorAll('.btn-editar, .btn-excluir, .btn-ver').forEach(b => {
+              b.disabled = false;
+            });
+
+            linhaEditando = null;
+            valoresOriginaisLinha = null;
+          } else {
+            alert('Erro ao atualizar turma');
+          }
+        } catch (error) {
+          console.error('Erro:', error);
+          alert('Erro ao conectar com o servidor');
+        }
       }
       else {
-        // ----- EDITAR -----
-        // Armazena os valores originais
         valoresOriginaisLinha = {
           nome: inputNome.value,
         };
@@ -161,25 +308,29 @@ $(document).ready(function () {
         btn.classList.remove("btn-outline-secondary");
         btn.classList.add("btn-success");
 
+        // Desabilita todos os outros botões
+        tabela.querySelectorAll('.btn-editar, .btn-excluir, .btn-ver').forEach(b => {
+          if (b !== btn) {
+            b.disabled = true;
+          }
+        });
+
         linhaEditando = linha;
 
-        // Função de validação durante edição
         function validarEdicao() {
           const nome = inputNome.value.trim().toUpperCase();
 
           let duplicado = false;
 
-          // Verifica se já existe outra linha com os mesmos valores
           $('#tabelaTurma tbody tr').not(linha).each(function () {
             const nomeExistente = $(this).find('td').eq(0).find('input').val().trim().toUpperCase();
 
             if (nomeExistente === nome) {
               duplicado = true;
-              return false; // Interrompe a verificacao
+              return false;
             }
           });
 
-          // Valida campos vazios
           if (nome.length === 0 || duplicado) {
             btn.disabled = true;
 
@@ -196,35 +347,25 @@ $(document).ready(function () {
           }
         }
 
-        // Validação inicial
         validarEdicao();
-
-        // Remove ouvintes antigos antes de adicionar
         inputNome.onkeyup = validarEdicao;
-
       }
     }
   });
 
-  // CLICAR FORA CANCELA A EDIÇÃO (Botao "editar" / todos os elementos)
+  // CLICAR FORA CANCELA A EDIÇÃO
   document.addEventListener("click", (event) => {
-
-    // nada a fazer se nenhuma linha está em edição
     if (!linhaEditando) return;
 
     const clicouDentroDaLinha = linhaEditando.contains(event.target);
 
-    // Só cancela se clicou FORA da linha e NÃO foi no botão de nota
     if (!clicouDentroDaLinha) {
       const linha = linhaEditando;
       const btnEditar = linha.querySelector(".btn-editar");
       const btnVer = linha.querySelector(".btn-ver");
       const inputNome = linha.querySelector(".nomeTurma");
 
-      // RESTAURA OS VALORES ORIGINAIS
       inputNome.value = valoresOriginaisLinha.nome;
-
-      // Restaura estado original
       inputNome.disabled = true;
 
       btnEditar.textContent = "Editar";
@@ -232,17 +373,22 @@ $(document).ready(function () {
       btnEditar.classList.add("btn-outline-secondary");
       btnEditar.disabled = false;
 
-      // Limpa os parametros
       inputNome.classList.remove("inputErrado");
       btnEditar.disabled = false;
       btnVer.disabled = false;
+
+      // Reabilita todos os botões
+      tabela.querySelectorAll('.btn-editar, .btn-excluir, .btn-ver').forEach(b => {
+        b.disabled = false;
+      });
+
       linhaEditando = null;
       valoresOriginaisLinha = null;
     }
   });
 
   // Função para remover elemento
-  document.addEventListener("click", function (event) {
+  document.addEventListener("click", async function (event) {
     const btn = event.target;
 
     if (btn.classList.contains("btn-excluir")) {
@@ -251,13 +397,28 @@ $(document).ready(function () {
 
       if (btn === botaoExcluir) {
         const linha = btn.closest("tr");
-        linha.remove();
+        const classId = linha.dataset.classId;
+
+        try {
+          const response = await fetch(`${API_URL}/classes/${classId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+
+          if (response.ok) {
+            linha.remove();
+          } else {
+            alert('Erro ao excluir turma');
+          }
+        } catch (error) {
+          console.error('Erro:', error);
+          alert('Erro ao conectar com o servidor');
+        }
+
         botaoExcluir = null;
       }
       else {
-        if (botaoExcluir) {
-          resetarBotaoExcluir(botaoExcluir);
-        }
+        if (botaoExcluir) resetarBotaoExcluir(botaoExcluir);
         botaoExcluir = btn;
         btn.textContent = "Confirma?";
         btn.classList.remove("btn-outline-danger");
@@ -272,7 +433,6 @@ $(document).ready(function () {
     }
   });
 
-  // Função para restaurar o botão excluir ao estado original
   function resetarBotaoExcluir(btn) {
     btn.textContent = "Excluir";
     btn.classList.remove("btn-danger");
@@ -283,15 +443,50 @@ $(document).ready(function () {
   $(document).on('click', '.btn-ver', function () {
     formTurma.reset();
     const linha = $(this).closest('tr');
-    const turma = linha.find('td').eq(0).find('input').val().trim(); // pega o valor do input da 1ª coluna
-    const url = 'alunos.html?turma=' + encodeURIComponent(turma);
+    const turma = linha.find('td').eq(0).find('input').val().trim();
+    const classId = linha.data('class-id');
+    const url = 'alunos.html?turma=' + encodeURIComponent(turma) + '&classId=' + classId + '&subjectId=' + subjectId;
     window.location.href = url;
   });
 
   // Ao clicar no botão desejado, envia a informação para o proximo arquivo
   btnVoltar.addEventListener('click', function (event) {
     event.preventDefault();
-    window.history.back();  // Volta uma página no histórico
+    window.history.back();
   });
+
+  // Ao clicar em sair, volta para o login 
+  document.addEventListener("click", function (event) {
+    const btn = event.target;
+
+    if (btn.classList.contains("sair")) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (btn === botaoSair) {
+        localStorage.clear();
+        window.location.href = '/frontend/login/html/login.html';
+      }
+      else {
+        if (botaoSair) resetarBotaoSair(botaoSair);
+        botaoSair = btn;
+        btn.textContent = "Confirma?";
+        btn.classList.remove("btn-outline-danger");
+        btn.classList.add("btn-danger");
+      }
+    }
+    else {
+      if (botaoSair) {
+        resetarBotaoSair(botaoSair);
+        botaoSair = null;
+      }
+    }
+  });
+
+  function resetarBotaoSair(btn) {
+    btn.innerHTML = '<i class="bi bi-door-open"></i> Sair';
+    btn.classList.remove("btn-danger");
+    btn.classList.add("btn-outline-danger");
+  }
 
 });

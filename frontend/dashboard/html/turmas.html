@@ -15,6 +15,7 @@
     rel="stylesheet"
     integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
     crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="../styles/base.css">
 
 </head>
@@ -22,10 +23,15 @@
     <!-- Navbar superior -->
     <nav class="navbar navbar-expand-lg bg-white fixed-top">
         <div class="container-fluid">
-            <a class="navbar-brand fw-bold" >Projeto NotaDez</a>
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2">
+                Projeto NotaDez
+                <span class="logo-icon">10</span>
+            </a>
             <div class="d-flex">
-                <span class="me-3 text-muted">Olá, XXXXXX!</span>
-                <button class="btn btn-outline-danger btn-sm">Sair</button>
+                <span class="me-3 text-muted">Olá, <strong>XXXXXX</strong>!</span>
+                <button id="btnSair" class="sair btn btn-outline-danger btn-sm">
+                    <i class="bi bi-door-open"></i> Sair
+                </button>
             </div>
         </div>
     </nav>
@@ -34,9 +40,9 @@
         <div class="row">
             <!-- Sidebar -->
             <div class="col-12 col-md-2 col-lg-2 sidebar position-fixed">
-                <a href="instituicoes.html">Início</a>
-                <a href="#" id="btnVoltar">Voltar</a>
-                <a href="" class="active">Turmas</a>
+                <a href="dashboard.html"><i class="bi bi-house-door-fill"></i> Início</a>
+                <a href="#" id="btnVoltar"><i class="bi bi-arrow-left"></i> Voltar</a>
+                <a href="" class="active"><i class="bi bi-person-lines-fill"></i> Turmas</a>
             </div>
 
             <!-- Conteúdo principal -->
@@ -63,17 +69,18 @@
                 <!-- Tabela de turmas -->
                 <div class="card shadow-sm">
                     <div class="card-body">
-                    <h5 class="card-title mb-3">Turmas cadastradas</h5>
-                    <table id="tabelaTurma" class="table table-hover align-middle">
-                        <thead class="table-light">
-                        <tr>
-                            <th>Nome da turma</th>
-                            <th class="text-center">Ações</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
+                        <h5 class="card-title mb-3" style="text-indent: 10px;">Turmas cadastradas</h5>
+                        <table id="tabelaTurma" class="table table-hover align-middle">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Nome da turma</th>
+                                <th class="text-center">Alunos</th>
+                                <th class="text-center">Ações</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

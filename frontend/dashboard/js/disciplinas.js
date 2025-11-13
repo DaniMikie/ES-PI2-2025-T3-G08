@@ -1,19 +1,76 @@
 /*
     Autor: Gustavo Alves
     Projeto: Projeto NotaDez
-    Arquivo: disciplinas.js
+    Arquivo: disciplinas.js (Integrado com Backend)
     Data: 09/10/2025
 */
 
+// URL base da API
+const API_URL = 'http://localhost:3000/api';
+
 $(document).ready(function () {
 
-  // ======== CURSO NA TELA ========
+  // Verifica autenticação do usuário
+  const token = localStorage.getItem('token');
+  const userName = localStorage.getItem('userName');
+
+  // Redireciona para login se não houver token
+  if (!token) {
+    window.location.href = '/frontend/login/html/login.html';
+    return;
+  }
+
+  // Exibe nome do usuário na navbar
+  if (userName) {
+    $('.navbar .text-muted').html(`Olá, <strong>${userName}</strong>!`);
+  }
+
+  // Recupera informações do curso pela URL
   const urlParams = new URLSearchParams(window.location.search);
   const curso = urlParams.get('curso');
-  document.querySelector('#msgCurso').textContent = curso ? `Curso: ${curso}` : 'Curso não informado';
+  const courseId = urlParams.get('courseId');
 
+  // Monta breadcrumb de navegação (Instituição > Curso)
+  async function carregarBreadcrumb() {
+    if (!courseId) {
+      document.querySelector('#msgCurso').textContent = 'Curso não informado';
+      return;
+    }
 
-  // ======== ELEMENTOS ========
+    try {
+      // Busca dados do curso
+      const courseResponse = await fetch(`${API_URL}/courses/${courseId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (courseResponse.ok) {
+        const course = await courseResponse.json();
+
+        // Busca dados da instituição
+        const instResponse = await fetch(`${API_URL}/institutions/${course.institution_id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (instResponse.ok) {
+          const institution = await instResponse.json();
+
+          // Monta o breadcrumb com links clicáveis
+          const breadcrumb = `
+            <a href="instituicoes.html" class="breadcrumb-link">${institution.name}</a> > 
+            <span class="breadcrumb-atual">${curso}</span>
+          `;
+          document.querySelector('#msgCurso').innerHTML = `<small>${breadcrumb}</small>`;
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar breadcrumb:', error);
+      document.querySelector('#msgCurso').textContent = `Curso: ${curso}`;
+    }
+  }
+
+  carregarBreadcrumb();
+
+  // Captura elementos do formulário e tabela
   const btnCadastrar = document.querySelector("#btnCadastrar");
   const btnVoltar = document.querySelector("#btnVoltar");
   const formDisc = document.querySelector("#formDisc");
@@ -27,43 +84,87 @@ $(document).ready(function () {
   const avisoPeriodo = document.querySelector("#avisoPeriodo");
   const avisoSigla = document.querySelector("#avisoSigla");
 
-
-  // ======== MÁSCARAS ========
+  // Aplica máscara de 5 dígitos no código
   $('#codDisc').mask('00000');
 
+  // Máscara sigla: 4 caracteres alfanuméricos em maiúsculo
   $('#siglaDisc').on('input', function () {
     let val = $(this).val().replace(/[^a-zA-Z0-9]/g, '').slice(0, 4);
     $(this).val(val.toUpperCase());
   });
 
+  // Máscara nome: apenas letras, números e espaços
   $('#nomeDisc').on('input', function () {
     let val = $(this).val().replace(/[^a-zA-Z0-9 ]/g, '');
     $(this).val(val);
   });
 
+  // Máscara período: número de 1 a 12 + "° Semestre"
   $('#periodoDisc').on('input', function () {
     let val = $(this).val().replace(/\D/g, '').slice(0, 2);
     let num = parseInt(val, 10);
-    if (!isNaN(num) && num > 12) num = 12;
+    if (!isNaN(num) && num > 12) num = 12; // Limita a 12 semestres
     if (isNaN(num) || num === 0) val = '';
     else val = num.toString();
 
     if (val.length === 0) $(this).val('');
     else {
       $(this).val(val + '° Semestre');
-      this.setSelectionRange(val.length, val.length);
+      this.setSelectionRange(val.length, val.length); // Mantém cursor antes do texto
     }
   });
 
+  // Variáveis de controle para edição e exclusão
+  let botaoExcluir = null; // Controla confirmação dupla de exclusão
+  let botaoSair = null; // Controla confirmação dupla de logout
+  let linhaEditando = null; // Linha atualmente em modo de edição
+  let valoresOriginaisLinha = null; // Backup dos valores antes da edição
 
-  // ======== VARIÁVEIS DE CONTROLE ========
-  let botaoExcluir = null;
-  let linhaEditando = null;
-  let valoresOriginaisLinha = null;
-
-  // ======== DESABILITA O BOTÃO CADASTRAR ========
+  // Inicia com botão cadastrar desabilitado
   btnCadastrar.disabled = true;
 
+  // Busca e exibe todas as disciplinas do curso
+  async function carregarDisciplinas() {
+    if (!courseId) return;
+
+    try {
+      const response = await fetch(`${API_URL}/subjects/course/${courseId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const subjects = await response.json();
+        tabela.querySelector("tbody").innerHTML = ''; // Limpa tabela
+
+        // Adiciona cada disciplina na tabela
+        subjects.forEach(subj => {
+          adicionarLinhaTabela(subj.id, subj.name, subj.abbreviation, subj.code, subj.semester);
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao carregar disciplinas:', error);
+    }
+  }
+
+  // Cria uma nova linha na tabela com os dados da disciplina
+  function adicionarLinhaTabela(id, nome, sigla, codigo, periodo) {
+    const novaLinha = document.createElement("tr");
+    novaLinha.dataset.subjectId = id;
+    novaLinha.innerHTML = `
+      <td><input type="text" value="${nome}" disabled class="nomeDisc form-control form-control-sm" style="width: 250px;"></td>
+      <td><input type="text" value="${sigla}" disabled class="siglaDisc form-control form-control-sm" style="width: 75px;"></td>
+      <td><input type="text" value="${codigo}" disabled class="codDisc form-control form-control-sm" style="width: 60px;"></td>
+      <td><input type="text" value="${periodo}" disabled class="periodoDisc form-control form-control-sm" style="width: 105px;"></td>
+      <td class="text-center">
+        <button class="btn-ver btn btn-sm btn-outline-primary me-2">Ver disciplina</button>
+        <button class="btn-editar btn btn-sm btn-outline-secondary me-2">Editar</button>
+        <button class="btn-excluir btn btn-sm btn-outline-danger me-2">Excluir</button>
+      </td>
+    `;
+    tabela.querySelector("tbody").appendChild(novaLinha);
+  }
+
+  carregarDisciplinas();
 
   // ======== VERIFICAÇÕES ========
   nomeDisc.onkeyup = onInputKeyUp;
@@ -113,7 +214,6 @@ $(document).ready(function () {
         avisoNomeDisc.style.display = "none";
       }
     }
-
     else if (target.id === 'siglaDisc') {
       if (siglaDisc.value.trim().length < 2) {
         siglaDisc.classList.add("inputErrado");
@@ -124,7 +224,6 @@ $(document).ready(function () {
         avisoSigla.style.display = "none";
       }
     }
-
     else if (target.id === 'codDisc') {
       if (codDisc.value.trim().length !== 5) {
         aviso.style.display = "flex";
@@ -141,7 +240,6 @@ $(document).ready(function () {
         aviso.style.display = "none";
       }
     }
-
     else if (target.id === 'periodoDisc') {
       if (periodoDisc.value.trim().length === 0) {
         periodoDisc.classList.add("inputErrado");
@@ -168,7 +266,7 @@ $(document).ready(function () {
   }
 
   // ======== CADASTRAR NOVA DISCIPLINA ========
-  formDisc.addEventListener("submit", (event) => {
+  formDisc.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     const nome = nomeDisc.value.trim();
@@ -178,26 +276,38 @@ $(document).ready(function () {
 
     if (!nome || !sigla || !codigo || !periodo) return;
 
-    const novaLinha = document.createElement("tr");
-    novaLinha.innerHTML = `
-      <td><input type="text" value="${nome}" disabled class="nomeDisc form-control form-control-sm" style="width: 250px;"></td>
-      <td><input type="text" value="${sigla}" disabled class="siglaDisc form-control form-control-sm" style="width: 75px;"></td>
-      <td><input type="text" value="${codigo}" disabled class="codDisc form-control form-control-sm" style="width: 60px;"></td>
-      <td><input type="text" value="${periodo}" disabled class="periodoDisc form-control form-control-sm" style="width: 105px;"></td>
-      <td class="text-center">
-        <button class="btn-ver btn btn-sm btn-outline-primary me-2">Ver disciplina</button>
-        <button class="btn-editar btn btn-sm btn-outline-secondary me-2">Editar</button>
-        <button class="btn-excluir btn btn-sm btn-outline-danger me-2">Excluir</button>
-      </td>
-    `;
+    try {
+      const response = await fetch(`${API_URL}/subjects`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          courseId: parseInt(courseId),
+          name: nome,
+          code: codigo,
+          abbreviation: sigla,
+          semester: periodo
+        })
+      });
 
-    tabela.querySelector("tbody").appendChild(novaLinha);
-    formDisc.reset();
-    btnCadastrar.disabled = true;
+      if (response.ok) {
+        const data = await response.json();
+        adicionarLinhaTabela(data.id, nome, sigla, codigo, periodo);
+        formDisc.reset();
+        btnCadastrar.disabled = true;
+      } else {
+        alert('Erro ao cadastrar disciplina');
+      }
+    } catch (error) {
+      console.error('Erro:', error);
+      alert('Erro ao conectar com o servidor');
+    }
   });
 
   // ======== EDITAR DISCIPLINA ========
-  document.addEventListener("click", (event) => {
+  document.addEventListener("click", async (event) => {
     const btn = event.target;
 
     if (!btn.classList.contains("btn-editar")) return;
@@ -212,29 +322,60 @@ $(document).ready(function () {
 
     const salvando = btn.textContent === "Salvar";
 
-    // Se já existe uma linha em edição e o usuário tenta editar outra
     if (!salvando && linhaEditando && linhaEditando !== linha) {
       alert("Conclua ou cancele a edição atual antes de editar outra linha.");
       return;
     }
 
     if (salvando) {
-      // ======== SALVAR ========
-      inputNome.disabled = true;
-      inputSigla.disabled = true;
-      inputCod.disabled = true;
-      inputPeriodo.disabled = true;
-      btnVer.disabled = false;
+      const subjectId = linha.dataset.subjectId;
+      const novoNome = inputNome.value.trim();
+      const novaSigla = inputSigla.value.trim();
+      const novoCodigo = inputCod.value.trim();
+      const novoPeriodo = inputPeriodo.value.trim();
 
-      btn.textContent = "Editar";
-      btn.classList.remove("btn-success");
-      btn.classList.add("btn-outline-secondary");
+      try {
+        const response = await fetch(`${API_URL}/subjects/${subjectId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            name: novoNome,
+            code: novoCodigo,
+            abbreviation: novaSigla,
+            semester: novoPeriodo
+          })
+        });
 
-      linhaEditando = null;
-      valoresOriginaisLinha = null;
+        if (response.ok) {
+          inputNome.disabled = true;
+          inputSigla.disabled = true;
+          inputCod.disabled = true;
+          inputPeriodo.disabled = true;
+          btnVer.disabled = false;
+
+          btn.textContent = "Editar";
+          btn.classList.remove("btn-success");
+          btn.classList.add("btn-outline-secondary");
+
+          // Reabilita todos os botões
+          tabela.querySelectorAll('.btn-editar, .btn-excluir, .btn-ver').forEach(b => {
+            b.disabled = false;
+          });
+
+          linhaEditando = null;
+          valoresOriginaisLinha = null;
+        } else {
+          alert('Erro ao atualizar disciplina');
+        }
+      } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao conectar com o servidor');
+      }
     }
     else {
-      // ======== MODO EDIÇÃO ========
       valoresOriginaisLinha = {
         nome: inputNome.value,
         sigla: inputSigla.value,
@@ -251,11 +392,18 @@ $(document).ready(function () {
       btn.textContent = "Salvar";
       btn.classList.remove("btn-outline-secondary");
       btn.classList.add("btn-success");
+
+      // Desabilita todos os outros botões
+      tabela.querySelectorAll('.btn-editar, .btn-excluir, .btn-ver').forEach(b => {
+        if (b !== btn) {
+          b.disabled = true;
+        }
+      });
+
       linhaEditando = linha;
 
       aplicarMascarasEdicao(inputNome, inputSigla, inputCod, inputPeriodo);
 
-      // ======== VALIDAÇÃO ONKEYUP ========
       function validarEdicao() {
         const nome = inputNome.value.trim().toUpperCase();
         const sigla = inputSigla.value.trim();
@@ -265,7 +413,6 @@ $(document).ready(function () {
         let nomeJaExiste = false;
         let codJaExiste = false;
 
-        // Verifica duplicidade (ignora a própria linha)
         document.querySelectorAll("#tabelaDisc tbody tr").forEach((tr) => {
           if (tr === linha) return;
           const nomeExistente = tr.querySelector(".nomeDisc").value.trim().toUpperCase();
@@ -274,7 +421,6 @@ $(document).ready(function () {
           if (codExistente === codigo) codJaExiste = true;
         });
 
-        // ===== Validações =====
         inputNome.classList.toggle("inputErrado", nome.length === 0 || nomeJaExiste);
         inputSigla.classList.toggle("inputErrado", sigla.length < 2);
         inputCod.classList.toggle("inputErrado", codigo.length !== 5 || codJaExiste);
@@ -291,7 +437,6 @@ $(document).ready(function () {
         btn.disabled = !valido;
       }
 
-      // Eventos de digitação
       [inputNome, inputSigla, inputCod, inputPeriodo].forEach(input => {
         input.addEventListener("keyup", validarEdicao);
       });
@@ -314,19 +459,16 @@ $(document).ready(function () {
     const inputCod = linhaEditando.querySelector(".codDisc");
     const inputPeriodo = linhaEditando.querySelector(".periodoDisc");
 
-    // Restaura valores originais
     inputNome.value = valoresOriginaisLinha.nome;
     inputSigla.value = valoresOriginaisLinha.sigla;
     inputCod.value = valoresOriginaisLinha.codigo;
     inputPeriodo.value = valoresOriginaisLinha.periodo;
 
-    // Desativa inputs
     inputNome.disabled = true;
     inputSigla.disabled = true;
     inputCod.disabled = true;
     inputPeriodo.disabled = true;
 
-    // Restaura tudo para o estado original
     btnEditar.textContent = "Editar";
     btnEditar.classList.remove("btn-success");
     btnEditar.classList.add("btn-outline-secondary");
@@ -338,30 +480,30 @@ $(document).ready(function () {
     inputCod.classList.remove("inputErrado");
     inputPeriodo.classList.remove("inputErrado");
 
+    // Reabilita todos os botões
+    tabela.querySelectorAll('.btn-editar, .btn-excluir, .btn-ver').forEach(b => {
+      b.disabled = false;
+    });
+
     linhaEditando = null;
     valoresOriginaisLinha = null;
   });
 
   // ======== FUNÇÃO PARA MÁSCARAS DURANTE EDIÇÃO ========
   function aplicarMascarasEdicao(inputNome, inputSigla, inputCod, inputPeriodo) {
-    // Código
     $(inputCod).mask('00000');
 
-    // Nome
     $(inputNome).on('input', function () {
       let val = $(this).val().replace(/[^a-zA-Z0-9 ]/g, '');
       $(this).val(val);
     });
 
-    // Sigla
     $(inputSigla).on('input', function () {
       let val = $(this).val().replace(/[^a-zA-Z0-9]/g, '');
       if (val.length > 4) val = val.slice(0, 4);
       $(this).val(val.toUpperCase());
     });
 
-
-    // Período
     $(inputPeriodo).on('input', function () {
       let val = $(this).val().replace(/\D/g, '').slice(0, 2);
       let num = parseInt(val, 10);
@@ -378,7 +520,7 @@ $(document).ready(function () {
   }
 
   // ======== EXCLUIR ========
-  document.addEventListener("click", function (event) {
+  document.addEventListener("click", async function (event) {
     const btn = event.target;
 
     if (btn.classList.contains("btn-excluir")) {
@@ -386,7 +528,25 @@ $(document).ready(function () {
       event.stopPropagation();
 
       if (btn === botaoExcluir) {
-        btn.closest("tr").remove();
+        const linha = btn.closest("tr");
+        const subjectId = linha.dataset.subjectId;
+
+        try {
+          const response = await fetch(`${API_URL}/subjects/${subjectId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+
+          if (response.ok) {
+            linha.remove();
+          } else {
+            alert('Erro ao excluir disciplina');
+          }
+        } catch (error) {
+          console.error('Erro:', error);
+          alert('Erro ao conectar com o servidor');
+        }
+
         botaoExcluir = null;
       } else {
         if (botaoExcluir) resetarBotaoExcluir(botaoExcluir);
@@ -403,7 +563,6 @@ $(document).ready(function () {
     }
   });
 
-  // ======== RESETAR BOTÃO EXCLUIR ========
   function resetarBotaoExcluir(btn) {
     btn.textContent = "Excluir";
     btn.classList.remove("btn-danger");
@@ -415,7 +574,8 @@ $(document).ready(function () {
     formDisc.reset();
     const linha = $(this).closest('tr');
     const disciplina = linha.find('.nomeDisc').val().trim();
-    const url = 'turmas.html?disciplina=' + encodeURIComponent(disciplina);
+    const subjectId = linha.data('subject-id');
+    const url = 'turmas.html?disciplina=' + encodeURIComponent(disciplina) + '&subjectId=' + subjectId;
     window.location.href = url;
   });
 
@@ -424,5 +584,39 @@ $(document).ready(function () {
     event.preventDefault();
     window.history.back();
   });
+
+  // ======== SAIR ========
+  document.addEventListener("click", function (event) {
+    const btn = event.target;
+
+    if (btn.classList.contains("sair")) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (btn === botaoSair) {
+        localStorage.clear();
+        window.location.href = '/frontend/login/html/login.html';
+      }
+      else {
+        if (botaoSair) resetarBotaoSair(botaoSair);
+        botaoSair = btn;
+        btn.textContent = "Confirma?";
+        btn.classList.remove("btn-outline-danger");
+        btn.classList.add("btn-danger");
+      }
+    }
+    else {
+      if (botaoSair) {
+        resetarBotaoSair(botaoSair);
+        botaoSair = null;
+      }
+    }
+  });
+
+  function resetarBotaoSair(btn) {
+    btn.innerHTML = '<i class="bi bi-door-open"></i> Sair';
+    btn.classList.remove("btn-danger");
+    btn.classList.add("btn-outline-danger");
+  }
 
 });

@@ -1,808 +1,1617 @@
 /* 
     Autor: Gustavo Alves
     Projeto: Projeto NotaDez
-    Arquivo: alunos.js
+    Arquivo: alunos.js (Completo com Sistema de Notas Integrado)
     Data: 09/10/2025
 */
 
+// URL base da API
+const API_URL = 'http://localhost:3000/api';
+
 $(document).ready(function () {
 
-  // Recebe a query string da URL atual
-  const urlParams = new URLSearchParams(window.location.search);
-  const turma = urlParams.get('turma');
+    // Verifica autenticação do usuário
+    const token = localStorage.getItem('token');
+    const userName = localStorage.getItem('userName');
 
-  // Exibe a disciplina na tela para o usuário
-  if (turma) {
-    document.querySelector('#msgTurma').textContent = `Nome da turma: ${turma}`;
-  }
-  else {
-    document.querySelector('#msgTurma').textContent = 'Turma não informada';
-  }
-
-  // Captura os elementos do HTML pelo ID
-  const modalCadastrarNota = document.querySelector("#modalCadastrarNota");
-  const btnCadastrar = document.querySelector("#btnCadastrar");
-  const btnVoltar = document.querySelector("#btnVoltar");
-  const btnNota = document.querySelector("#btnNota");
-  const formAluno = document.querySelector("#formAluno");
-  const raAluno = document.querySelector("#raAluno");
-  const nomeAluno = document.querySelector("#nomeAluno");
-  const aviso = document.querySelector("#aviso");
-  const tabela = document.querySelector("#tabelaAlunos");
-
-  // Deixa o card de cadastrar a nota apagado
-  modalCadastrarNota.style.display = "none";
-
-
-  // Variáveis para verificar oo botoes excluir e salvar
-  let botaoExcluir = null;
-  let linhaEditando = null;
-  let notaEditando = null;
-
-  // Variáveis para armazenar valores originais durante edição
-  let valorOriginalNota = null;
-  let valoresOriginaisLinha = null;
-
-  // Variáveis para armazenar valores da nota e alunos
-  let componentesNota = []; // Armazena os componentes criados (ex.: [{nome: 'N1', peso: 30}, ...])
-  let temNotas = false; // Flag que indica se já há componentes de nota cadastrados
-
-  // Remove tudo que não for letra (A–Z ou a–z, incluindo acentos e espaços)
-  $('#nomeAluno').on('input', function () {
-    $(this).val($(this).val().replace(/[^A-Za-zÀ-ÿ\s]/g, ''));
-  });
-
-  // Remove tudo que não for número do "raAluno", e limita a 8 dígitos
-  $('#raAluno').mask('00000000');
-
-  // Desabilita o botão de salvar inicialmente
-  btnCadastrar.disabled = true;
-
-  // Adiciona eventos para detectar quando o usuário digita nos inputs
-  nomeAluno.onkeyup = onInputKeyUp;
-  raAluno.onkeyup = onInputKeyUp;
-
-  // Função que verifica se os inputs estão preenchidos corretamente 
-  function onInputKeyUp(_event) {
-    const target = _event.target; // O campo que disparou o evento
-    const raValor = raAluno.value.trim();
-    const nomeValor = nomeAluno.value.trim();
-
-    // Verifica se o RA já existe na tabela
-    const rasExistentes = Array.from(document.querySelectorAll("#tabelaAlunos tbody .ra"))
-      .map(input => input.value.trim());
-    const raDuplicado = rasExistentes.includes(raValor);
-
-    // ----- Validação do RA -----
-    if (target.id === 'raAluno') {
-      if (raValor.length !== 8) {
-        raAluno.classList.add("inputErrado");
-        aviso.textContent = "O RA deve conter exatamente 8 dígitos.";
-        aviso.style.display = "flex";
-      }
-      else if (raDuplicado) {
-        raAluno.classList.add("inputErrado");
-        aviso.textContent = `Já existe um aluno cadastrado com o RA ${raValor}.`;
-        aviso.style.display = "flex";
-      }
-      else {
-        raAluno.classList.remove("inputErrado");
-        aviso.style.display = "none";
-      }
+    // Redireciona para login se não houver token
+    if (!token) {
+        window.location.href = '/frontend/login/html/login.html';
+        return;
     }
 
-    // ----- Validação do Nome -----
-    else if (target.id === 'nomeAluno') {
-      nomeAluno.classList.toggle("inputErrado", nomeAluno.value.trim().length === 0);
+    // Exibe nome do usuário na navbar
+    if (userName) {
+        $('.navbar .text-muted').html(`Olá, <strong>${userName}</strong>!`);
     }
 
+    // Recupera informações da turma pela URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const turma = urlParams.get('turma');
+    const classId = urlParams.get('classId');
+    const subjectId = urlParams.get('subjectId');
 
-    // ----- Habilita/Desabilita o botão de Cadastrar -----
-    const isNotEmpty = (raValor.length > 0 && nomeValor.length > 0);
-    const isRaValid = (raValor.length === 8 && !raDuplicado);
+    // Monta breadcrumb de navegação (Instituição > Curso > Disciplina > Turma)
+    async function carregarBreadcrumb() {
+        if (!subjectId || !classId) {
+            document.querySelector('#msgTurma').textContent = 'Turma não informada';
+            return;
+        }
 
-    if (isNotEmpty && isRaValid) {
-      btnCadastrar.disabled = false;
+        try {
+            // Busca dados da disciplina
+            const subjectResponse = await fetch(`${API_URL}/subjects/${subjectId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (subjectResponse.ok) {
+                const subject = await subjectResponse.json();
+
+                // Busca dados do curso
+                const courseResponse = await fetch(`${API_URL}/courses/${subject.course_id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (courseResponse.ok) {
+                    const course = await courseResponse.json();
+
+                    // Busca dados da instituição
+                    const instResponse = await fetch(`${API_URL}/institutions/${course.institution_id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (instResponse.ok) {
+                        const institution = await instResponse.json();
+
+                        // Monta o breadcrumb com links clicáveis
+                        const breadcrumb = `
+                            <a href="instituicoes.html" class="breadcrumb-link">${institution.name}</a> <span style="color: #616161;">></span> 
+                            <a href="disciplinas.html?curso=${encodeURIComponent(course.name)}&courseId=${course.id}" class="breadcrumb-link">${course.name}</a> <span style="color: #616161;">></span> 
+                            <a href="turmas.html?disciplina=${encodeURIComponent(subject.name)}&subjectId=${subject.id}" class="breadcrumb-link">${subject.name}</a> <span style="color: #616161;">></span> 
+                            <span class="breadcrumb-atual">${turma}</span>
+                        `;
+                        document.querySelector('#msgTurma').innerHTML = `<small>${breadcrumb}</small>`;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao carregar breadcrumb:', error);
+            document.querySelector('#msgTurma').textContent = `Turma: ${turma}`;
+        }
     }
-    else {
-      btnCadastrar.disabled = true;
+
+    carregarBreadcrumb();
+
+    // Captura os elementos do HTML pelo ID
+    const btnCadastrar = document.querySelector("#btnCadastrar");
+    const btnVoltar = document.querySelector("#btnVoltar");
+    const btnNota = document.querySelector("#btnNota");
+    const formAluno = document.querySelector("#formAluno");
+    const raAluno = document.querySelector("#raAluno");
+    const nomeAluno = document.querySelector("#nomeAluno");
+    const aviso = document.querySelector("#aviso");
+    const tabela = document.querySelector("#tabelaAlunos");
+
+    // Variáveis de controle
+    let botaoExcluir = null;
+    let botaoSair = null;
+    let linhaEditando = null;
+    let valoresOriginaisLinha = null;
+    let componentesNota = [];
+    let temNotas = false;
+
+    // Máscaras
+    $('#nomeAluno').on('input', function () {
+        $(this).val($(this).val().replace(/[^A-Za-zÀ-ÿ\s]/g, ''));
+    });
+
+    $('#raAluno').mask('00000000');
+
+    btnCadastrar.disabled = true;
+
+    // ======== CARREGAR COMPONENTES DE NOTA ========
+    async function carregarComponentesNota() {
+        if (!subjectId) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/grade-components/subject/${subjectId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+
+                if (data.components && data.components.length > 0) {
+                    componentesNota = data.components.map(c => ({
+                        id: c.id,
+                        nome: c.name,
+                        descricao: c.description
+                    }));
+                    formulaAtual = data.formula;
+                    temNotas = true;
+                    atualizarTabelaComponentes();
+                    await carregarNotasDaTurma();
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao carregar componentes:', error);
+        }
     }
-  }
 
-  // Adicionar novo aluno à tabela
-  formAluno.addEventListener("submit", (event) => {
-    event.preventDefault();
+    // ======== CARREGAR ALUNOS ========
+    async function carregarAlunos() {
+        if (!classId) return;
 
-    const ra = raAluno.value.trim();
-    const nome = nomeAluno.value.trim();
+        try {
+            const response = await fetch(`${API_URL}/students/class/${classId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
 
-    if (ra === "" || nome === "") return;
+            if (response.ok) {
+                const students = await response.json();
+                tabela.querySelector("tbody").innerHTML = '';
 
-    // Cria uma nova linha na tabela
-    const novaLinha = document.createElement("tr");
+                students.forEach(student => {
+                    adicionarLinhaTabela(student.id, student.student_id, student.name);
+                });
 
-    // Monta células iniciais
-    novaLinha.innerHTML = `
+                if (temNotas) {
+                    await carregarNotasDaTurma();
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao carregar alunos:', error);
+        }
+    }
+
+    // ======== CARREGAR NOTAS DA TURMA ========
+    async function carregarNotasDaTurma() {
+        if (!classId) return;
+
+        try {
+            const response = await fetch(`${API_URL}/grades/class/${classId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const grades = await response.json();
+
+                grades.forEach(g => {
+                    const linha = document.querySelector(`tr[data-student-id="${g.student_id}"]`);
+                    if (linha) {
+                        const comp = componentesNota.find(c => c.id === g.grade_component_id);
+                        if (comp) {
+                            const input = linha.querySelector(`input[data-componente="${comp.nome}"]`);
+                            if (input && g.grade !== null) {
+                                // Formata nota com 1 casa decimal
+                                const notaFormatada = parseFloat(g.grade).toFixed(1);
+                                input.value = notaFormatada;
+                            }
+                        }
+                    }
+                });
+
+                // Calcula médias
+                document.querySelectorAll('#tabelaAlunos tbody tr').forEach(linha => {
+                    calcularMediaAluno(linha);
+                });
+            }
+        } catch (error) {
+            console.error('Erro ao carregar notas:', error);
+        }
+    }
+
+    function adicionarLinhaTabela(id, ra, nome) {
+        const novaLinha = document.createElement("tr");
+        novaLinha.dataset.studentId = id;
+
+        novaLinha.innerHTML = `
       <td><input type="text" value="${ra}" disabled class="ra form-control form-control-sm"></td>
       <td><input type="text" value="${nome}" disabled class="nome form-control form-control-sm"></td>
     `;
 
-    // Se já houver notas cadastradas, adiciona colunas de notas + média
-    if (temNotas) {
-      componentesNota.forEach(comp => {
-        const td = document.createElement("td");
-        td.innerHTML = `
-          <div class="nota-container d-flex align-items-center">
-            <input type="text" class="nota form-control form-control-sm me-2" data-componente="${comp.nome}" disabled>
-            <button class="btn btn-sm btn-outline-secondary btn-editar-nota">✏️</button>
-          </div>
+        if (temNotas) {
+            componentesNota.forEach(comp => {
+                const td = document.createElement("td");
+                td.innerHTML = `
+          <input type="text" class="nota form-control form-control-sm me-2" data-componente="${comp.nome}" data-component-id="${comp.id}" disabled>
         `;
-        novaLinha.appendChild(td);
-      });
+                novaLinha.appendChild(td);
+            });
 
-      const tdMedia = document.createElement("td");
-      tdMedia.innerHTML = `<input type="text" value="" disabled class="mediaFinal form-control form-control-sm" style="width:46px;">`;
-      novaLinha.appendChild(tdMedia);
-    }
+            const tdMedia = document.createElement("td");
+            tdMedia.style.textAlign = "center";
+            tdMedia.innerHTML = `<input type="text" value="" disabled class="mediaFinal form-control form-control-sm" style="width:50px; text-align:center;">`;
+            novaLinha.appendChild(tdMedia);
+        }
 
-    // Coluna de ações
-    const tdAcoes = document.createElement("td");
-    tdAcoes.classList.add("text-center", "td-acoes");
-    tdAcoes.innerHTML = `
-      <button class="btn btn-sm btn-outline-secondary me-1 btn-editar" title="Editar todos os elementos">Editar</button>
-      <button class="btn btn-sm btn-outline-danger me-1 btn-excluir" title="Excluir alunos">Excluir</button>
+        const tdAcoes = document.createElement("td");
+        tdAcoes.classList.add("text-center", "td-acoes");
+        tdAcoes.innerHTML = `
+      <button class="btn btn-sm btn-outline-secondary me-1 btn-editar">Editar</button>
+      <button class="btn btn-sm btn-outline-danger me-1 btn-excluir">Excluir</button>
     `;
-    novaLinha.appendChild(tdAcoes);
+        novaLinha.appendChild(tdAcoes);
 
-    tabela.querySelector("tbody").appendChild(novaLinha);
-
-    formAluno.reset();
-    btnCadastrar.disabled = true;
-  });
-
-  // Evento para validar e formatar as notas na tabela
-  $(document).on('input', '.nota', function () {
-    let valor = this.value;
-    valor = valor.replace(/[^0-9.]/g, '');
-    const partes = valor.split('.');
-    if (partes.length > 2) {
-      valor = partes[0] + '.' + partes[1];
+        tabela.querySelector("tbody").appendChild(novaLinha);
     }
-    if (valor.includes('.')) {
-      const [inteiro, decimal] = valor.split('.');
-      valor = inteiro.slice(0, 2) + '.' + decimal.slice(0, 1);
-    }
-    else {
-      valor = valor.slice(0, 2);
-    }
-    const num = parseFloat(valor);
-    if (!isNaN(num) && num > 10) {
-      valor = '10.0';
-    }
-    this.value = valor;
-  });
 
-  // Funcao que calcula a media do aluno
-  function calcularMediaAluno(linha) {
-    let soma = 0;
+    // Inicializa
+    carregarComponentesNota().then(() => carregarAlunos());
 
-    componentesNota.forEach(comp => {
-      const input = linha.querySelector(`input[data-componente="${comp.nome}"]`);
-      if (input && input.value.trim() !== "") {
-        soma += (parseFloat(input.value) * comp.peso) / 100;
-      }
+    // Validação dos inputs
+    nomeAluno.onkeyup = onInputKeyUp;
+    raAluno.onkeyup = onInputKeyUp;
+
+    function onInputKeyUp(_event) {
+        const target = _event.target;
+        const raValor = raAluno.value.trim();
+        const nomeValor = nomeAluno.value.trim();
+
+        const rasExistentes = Array.from(document.querySelectorAll("#tabelaAlunos tbody .ra"))
+            .map(input => input.value.trim());
+        const raDuplicado = rasExistentes.includes(raValor);
+
+        if (target.id === 'raAluno') {
+            if (raValor.length !== 8) {
+                raAluno.classList.add("inputErrado");
+                aviso.textContent = "O RA deve conter exatamente 8 dígitos.";
+                aviso.style.display = "flex";
+            }
+            else if (raDuplicado) {
+                raAluno.classList.add("inputErrado");
+                aviso.textContent = `Já existe um aluno cadastrado com o RA ${raValor}.`;
+                aviso.style.display = "flex";
+            }
+            else {
+                raAluno.classList.remove("inputErrado");
+                aviso.style.display = "none";
+            }
+        }
+        else if (target.id === 'nomeAluno') {
+            nomeAluno.classList.toggle("inputErrado", nomeAluno.value.trim().length === 0);
+        }
+
+        const isNotEmpty = (raValor.length > 0 && nomeValor.length > 0);
+        const isRaValid = (raValor.length === 8 && !raDuplicado);
+
+        btnCadastrar.disabled = !(isNotEmpty && isRaValid);
+    }
+
+    // Adicionar novo aluno
+    formAluno.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const ra = raAluno.value.trim();
+        const nome = nomeAluno.value.trim();
+
+        if (ra === "" || nome === "") return;
+
+        try {
+            const response = await fetch(`${API_URL}/students`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    classId: parseInt(classId),
+                    studentId: ra,
+                    name: nome
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                adicionarLinhaTabela(data.id, ra, nome);
+                formAluno.reset();
+                btnCadastrar.disabled = true;
+            } else {
+                alert('Erro ao cadastrar aluno');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao conectar com o servidor');
+        }
     });
 
-    const mediaInput = linha.querySelector(".mediaFinal");
-    mediaInput.value = soma.toFixed(2);
-  }
+    // Evento para validar e formatar as notas na tabela
+    $(document).on('input', '.nota', function () {
+        let valor = this.value;
+        valor = valor.replace(/[^0-9.]/g, '');
+        const partes = valor.split('.');
+        if (partes.length > 2) {
+            valor = partes[0] + '.' + partes[1];
+        }
+        if (valor.includes('.')) {
+            const [inteiro, decimal] = valor.split('.');
+            valor = inteiro.slice(0, 2) + '.' + decimal.slice(0, 2);
+        }
+        else {
+            valor = valor.slice(0, 2);
+        }
+        const num = parseFloat(valor);
+        if (!isNaN(num) && num > 10) {
+            valor = '10.00';
+        }
+        this.value = valor;
+    });
 
-  // Validação dos campos 'nome' e 'ra' dentro da tabela
-  $(document).on('input', '.nome', function () {
-    $(this).val($(this).val().replace(/[^A-Za-zÀ-ÿ\s]/g, ''));
-  });
-  $(document).on('input', '.ra', function () {
-    $(this).val($(this).val().replace(/[^0-9]/g, '').slice(0, 8));
-  });
+    // Formatar nota quando o campo perde o foco (sem salvar ainda)
+    $(document).on('blur', '.nota', function () {
+        const input = $(this);
+        let grade = input.val().trim();
 
-  // Evento para manipular cliques na tabela (editar nota individual, editar linha toda)
-  tabela.addEventListener("click", (event) => {
-    const btn = event.target;
+        // Formata a nota removendo zeros desnecessários
+        if (grade !== '') {
+            const num = parseFloat(grade);
+            if (!isNaN(num)) {
+                // Formata nota com 1 casa decimal
+                grade = num.toFixed(1);
+                input.val(grade);
+            }
+        }
+    });
 
-    //  BOTÃO DE EDITAR NOTA INDIVIDUAL
-    if (btn.classList.contains("btn-editar-nota")) {
-      const td = btn.closest("td");
-      const inputNota = td.querySelector("input.nota");
-      const editando = !inputNota.disabled;
+    // Funcao que calcula a media do aluno
+    function calcularMediaAluno(linha) {
+        if (!formulaAtual || componentesNota.length === 0) return;
 
-      if (editando) {
-        // Ao salvar a nota
-        inputNota.disabled = true;
-        btn.textContent = "✏️";
+        try {
+            let formula = formulaAtual;
+
+            // Substitui cada componente pelo valor da nota (case insensitive)
+            componentesNota.forEach(comp => {
+                const input = linha.querySelector(`input[data-componente="${comp.nome}"]`);
+                const valor = input && input.value.trim() !== "" ? input.value : "0";
+                formula = formula.replace(new RegExp(comp.nome, 'gi'), valor);
+            });
+
+            // Calcula o resultado
+            const resultado = eval(formula);
+
+            const mediaInput = linha.querySelector(".mediaFinal");
+            if (mediaInput && !isNaN(resultado)) {
+                // Formata média com 1 casa decimal
+                const mediaFormatada = resultado.toFixed(1);
+                mediaInput.value = mediaFormatada;
+            }
+        } catch (error) {
+            console.error('Erro ao calcular média:', error);
+        }
+    }
+
+    // Validação dos campos dentro da tabela
+    $(document).on('input', '.nome', function () {
+        $(this).val($(this).val().replace(/[^A-Za-zÀ-ÿ\s]/g, ''));
+    });
+    $(document).on('input', '.ra', function () {
+        $(this).val($(this).val().replace(/[^0-9]/g, '').slice(0, 8));
+    });
+
+    // Editar aluno
+    tabela.addEventListener("click", async (event) => {
+        const btn = event.target;
+
+        if (btn.classList.contains("btn-editar")) {
+            event.stopPropagation();
+
+            const linha = btn.closest("tr");
+            const inputsNotas = linha.querySelectorAll(".nota");
+            const inputRa = linha.querySelector("input.ra");
+            const inputNome = linha.querySelector("input.nome");
+
+            const salvando = btn.textContent === "Salvar";
+
+            if (!salvando && linhaEditando && linhaEditando !== linha) {
+                alert("Conclua ou cancele a edição atual antes de editar outra linha.");
+                return;
+            }
+
+            if (salvando) {
+                const studentId = linha.dataset.studentId;
+                const novoRa = inputRa.value.trim();
+                const novoNome = inputNome.value.trim();
+
+                try {
+                    // Salva dados do aluno
+                    const response = await fetch(`${API_URL}/students/${studentId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            studentId: novoRa,
+                            name: novoNome
+                        })
+                    });
+
+                    if (response.ok) {
+                        // Salva todas as notas editadas
+                        for (const input of inputsNotas) {
+                            const componentId = input.dataset.componentId;
+                            let grade = input.value.trim();
+
+                            if (componentId) {
+                                await fetch(`${API_URL}/grades`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${token}`
+                                    },
+                                    body: JSON.stringify({
+                                        studentId: parseInt(studentId),
+                                        gradeComponentId: parseInt(componentId),
+                                        grade: grade === '' ? null : parseFloat(grade)
+                                    })
+                                });
+                            }
+                        }
+
+                        inputsNotas.forEach(input => input.disabled = true);
+                        inputRa.disabled = true;
+                        inputNome.disabled = true;
+
+                        btn.textContent = "Editar";
+                        btn.classList.remove("btn-success");
+                        btn.classList.add("btn-outline-secondary");
+                        btn.disabled = false;
+                        btnNota.disabled = false;
+                        btnImportarCSV.disabled = false;
+                        btnExportarCSV.disabled = false;
+
+                        // Reabilita todos os outros botões
+                        tabela.querySelectorAll(".btn-editar, .btn-excluir").forEach(b => {
+                            b.disabled = false;
+                        });
+
+                        // Calcula a média SOMENTE após salvar
+                        calcularMediaAluno(linha);
+
+                        linhaEditando = null;
+                        valoresOriginaisLinha = null;
+                    } else {
+                        alert('Erro ao atualizar aluno');
+                    }
+                } catch (error) {
+                    console.error('Erro:', error);
+                    alert('Erro ao conectar com o servidor');
+                }
+            }
+            else {
+                valoresOriginaisLinha = {
+                    ra: inputRa.value,
+                    nome: inputNome.value,
+                    notas: Array.from(inputsNotas).map(input => input.value)
+                };
+
+                inputsNotas.forEach(input => input.disabled = false);
+                inputRa.disabled = false;
+                inputNome.disabled = false;
+
+                btn.textContent = "Salvar";
+                btn.classList.remove("btn-outline-secondary");
+                btn.classList.add("btn-success");
+                btnNota.disabled = true;
+                btnImportarCSV.disabled = true;
+                btnExportarCSV.disabled = true;
+
+                // Desabilita TODOS os botões de editar e excluir (incluindo o da própria linha)
+                tabela.querySelectorAll(".btn-editar, .btn-excluir").forEach(b => {
+                    if (b !== btn) {
+                        b.disabled = true;
+                    }
+                });
+
+                linhaEditando = linha;
+
+                function validarEdicao() {
+                    let duplicado = false;
+
+                    const ra = inputRa.value.trim();
+                    const nome = inputNome.value.trim();
+
+                    $('#tabelaAlunos tbody tr').not(linha).each(function () {
+                        const raExistente = $(this).find('td').eq(0).find('input').val().trim();
+
+                        if (raExistente === ra) {
+                            duplicado = true;
+                            return false;
+                        }
+                    });
+
+                    if (ra.length !== 8 || nome.length === 0 || duplicado) {
+                        btn.disabled = true;
+                        inputRa.classList.toggle("inputErrado", ra.length !== 8 || duplicado);
+                        inputNome.classList.toggle("inputErrado", nome.length === 0);
+                    }
+                    else {
+                        btn.disabled = false;
+                        inputRa.classList.remove("inputErrado");
+                        inputNome.classList.remove("inputErrado");
+                    }
+                }
+
+                validarEdicao();
+                inputRa.onkeyup = validarEdicao;
+                inputNome.onkeyup = validarEdicao;
+            }
+        }
+    });
+
+    // Cancelar edição ao clicar fora
+    document.addEventListener("click", (event) => {
+        if (!linhaEditando) return;
+
+        const clicouDentroDaLinha = linhaEditando.contains(event.target);
+
+        if (!clicouDentroDaLinha) {
+            const linha = linhaEditando;
+            const btnEditar = linha.querySelector(".btn-editar");
+            const inputsNotas = linha.querySelectorAll(".nota");
+            const inputRa = linha.querySelector("input.ra");
+            const inputNome = linha.querySelector("input.nome");
+
+            inputRa.value = valoresOriginaisLinha.ra;
+            inputNome.value = valoresOriginaisLinha.nome;
+            inputsNotas.forEach((input, index) => {
+                input.value = valoresOriginaisLinha.notas[index];
+            });
+
+            inputsNotas.forEach(input => input.disabled = true);
+            inputRa.disabled = true;
+            inputNome.disabled = true;
+
+            btnEditar.textContent = "Editar";
+            btnEditar.classList.remove("btn-success");
+            btnEditar.classList.add("btn-outline-secondary");
+            btnEditar.disabled = false;
+            btnNota.disabled = false;
+            btnImportarCSV.disabled = false;
+            btnExportarCSV.disabled = false;
+
+            // Reabilita todos os outros botões
+            tabela.querySelectorAll(".btn-editar, .btn-excluir").forEach(b => {
+                b.disabled = false;
+            });
+
+            inputRa.classList.remove("inputErrado");
+            inputNome.classList.remove("inputErrado");
+
+            linhaEditando = null;
+            valoresOriginaisLinha = null;
+        }
+    });
+
+    // ======== BOTÃO EDITAR NOTA NO CABEÇALHO ========
+    let colunaEditando = null;
+    let valoresOriginaisColuna = [];
+
+    document.addEventListener("click", async (event) => {
+        const btn = event.target.closest(".btn-editar-nota");
+
+        // Se clicou fora da tabela e tem coluna editando, cancela
+        if (!btn && colunaEditando && !event.target.closest('#tabelaAlunos')) {
+            cancelarEdicaoColuna();
+            return;
+        }
+
+        if (!btn) return;
+
+        const componente = btn.dataset.componente;
+        const editando = btn.classList.contains("btn-outline-success");
+
+        if (editando) {
+            // Salvando (✅ → pencil)
+            btn.innerHTML = '<i class="bi bi-pencil-square"></i>';
+            btn.classList.remove("btn-outline-success");
+            btn.classList.add("btn-outline-secondary");
+
+            // Salva todas as notas da coluna e calcula médias
+            const inputs = document.querySelectorAll(`input[data-componente="${componente}"]`);
+
+            for (const input of inputs) {
+                const linha = input.closest("tr");
+                const studentId = linha.dataset.studentId;
+                const componentId = input.dataset.componentId;
+                let grade = input.value.trim();
+
+                if (studentId && componentId) {
+                    try {
+                        await fetch(`${API_URL}/grades`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                                studentId: parseInt(studentId),
+                                gradeComponentId: parseInt(componentId),
+                                grade: grade === '' ? null : parseFloat(grade)
+                            })
+                        });
+                    } catch (error) {
+                        console.error('Erro ao salvar nota:', error);
+                    }
+                }
+
+                input.disabled = true;
+
+                // Calcula a média SOMENTE após salvar
+                calcularMediaAluno(linha);
+            }
+
+            // Reabilita todos os outros botões
+            tabela.querySelectorAll(".btn-editar, .btn-excluir, .btn-editar-nota").forEach(b => {
+                b.disabled = false;
+            });
+            btnNota.disabled = false;
+            btnImportarCSV.disabled = false;
+            btnExportarCSV.disabled = false;
+
+            colunaEditando = null;
+            valoresOriginaisColuna = [];
+        } else {
+            // Salva valores originais
+            valoresOriginaisColuna = [];
+            document.querySelectorAll(`input[data-componente="${componente}"]`).forEach(input => {
+                valoresOriginaisColuna.push(input.value);
+            });
+
+            // Editando (pencil → check)
+            btn.innerHTML = '<i class="bi bi-check-lg"></i>';
+            btn.classList.remove("btn-outline-secondary");
+            btn.classList.add("btn-outline-success");
+
+            document.querySelectorAll(`input[data-componente="${componente}"]`).forEach(input => {
+                input.disabled = false;
+            });
+
+            // Desabilita todos os outros botões
+            tabela.querySelectorAll(".btn-editar, .btn-excluir, .btn-editar-nota").forEach(b => {
+                if (b !== btn) {
+                    b.disabled = true;
+                }
+            });
+            btnNota.disabled = true;
+            btnImportarCSV.disabled = true;
+            btnExportarCSV.disabled = true;
+
+            colunaEditando = { btn, componente };
+        }
+    });
+
+    // Função para cancelar edição da coluna
+    function cancelarEdicaoColuna() {
+        if (!colunaEditando) return;
+
+        const { btn, componente } = colunaEditando;
+
+        // Restaura valores originais
+        const inputs = document.querySelectorAll(`input[data-componente="${componente}"]`);
+        inputs.forEach((input, index) => {
+            input.value = valoresOriginaisColuna[index];
+            input.disabled = true;
+        });
+
+        // Restaura botão
+        btn.innerHTML = '<i class="bi bi-pencil-square"></i>';
         btn.classList.remove("btn-outline-success");
         btn.classList.add("btn-outline-secondary");
 
-        // Atualiza média ao salvar nota individual
-        const linha = btn.closest("tr");
-        calcularMediaAluno(linha);
+        // Reabilita todos os botões
+        tabela.querySelectorAll(".btn-editar, .btn-excluir, .btn-editar-nota").forEach(b => {
+            b.disabled = false;
+        });
+        btnNota.disabled = false;
+        btnImportarCSV.disabled = false;
+        btnExportarCSV.disabled = false;
 
-        // Limpa sa variáveis para indicar que nada mais está em edição
-        notaEditando = null;
-        valorOriginalNota = null;
-
-      }
-      else {
-        // Ao começar a editar
-        valorOriginalNota = inputNota.value; // armazena o valor original
-        inputNota.disabled = false;
-        inputNota.focus();
-        btn.textContent = "✅";
-        btn.classList.remove("btn-outline-secondary");
-        btn.classList.add("btn-outline-success");
-
-        // Define a variável para rastrear qual botão está ativo
-        notaEditando = btn;
-
-      }
+        colunaEditando = null;
+        valoresOriginaisColuna = [];
     }
 
-    //  BOTÃO DE EDITAR LINHA TODA
-    if (btn.classList.contains("btn-editar")) {
-      event.stopPropagation(); // impede o clique fora de cancelar imediatamente
+    // Excluir aluno
+    document.addEventListener("click", async function (event) {
+        const btn = event.target;
 
-      const linha = btn.closest("tr");
-      const inputsNotas = linha.querySelectorAll(".nota");
-      const inputRa = linha.querySelector("input.ra");
-      const inputNome = linha.querySelector("input.nome");
-      const btnLapis = linha.querySelectorAll(".btn-editar-nota");
+        if (btn.classList.contains("btn-excluir")) {
+            event.preventDefault();
+            event.stopPropagation();
 
-      const salvando = btn.textContent === "Salvar";
+            if (btn === botaoExcluir) {
+                const linha = btn.closest("tr");
+                const studentId = linha.dataset.studentId;
 
-      // Se já existe uma linha em edição e o usuário tenta editar outra
-      if (!salvando && linhaEditando && linhaEditando !== linha) {
-        alert("Conclua ou cancele a edição atual antes de editar outra linha.");
-        return;
-      }
+                try {
+                    const response = await fetch(`${API_URL}/students/${studentId}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
 
-      if (salvando) {
+                    if (response.ok) {
+                        linha.remove();
+                    } else {
+                        alert('Erro ao excluir aluno');
+                    }
+                } catch (error) {
+                    console.error('Erro:', error);
+                    alert('Erro ao conectar com o servidor');
+                }
 
-        // ----- SALVAR -----
-        inputsNotas.forEach(input => input.disabled = true);
-        inputRa.disabled = true;
-        inputNome.disabled = true;
-        btnLapis.forEach(btn => btn.style.display = "flex");
-
-        btn.textContent = "Editar";
-        btn.classList.remove("btn-success");
-        btn.classList.add("btn-outline-secondary");
-        btn.disabled = false;
-
-        // Atualiza média ao salvar edição completa
-        calcularMediaAluno(linha);
-
-        linhaEditando = null; // nenhuma linha mais em edição
-        valoresOriginaisLinha = null; // Limpa os valores originais
-      }
-      else {
-
-        // ARMAZENA OS VALORES ORIGINAIS ANTES DE EDITAR
-        valoresOriginaisLinha = {
-          ra: inputRa.value,
-          nome: inputNome.value,
-          notas: Array.from(inputsNotas).map(input => input.value)
-        };
-
-        // ----- EDITAR -----
-        inputsNotas.forEach(input => input.disabled = false);
-        inputRa.disabled = false;
-        inputNome.disabled = false;
-        btnLapis.forEach(btn => btn.style.display = "none");
-
-        btn.textContent = "Salvar";
-        btn.classList.remove("btn-outline-secondary");
-        btn.classList.add("btn-success");
-
-        linhaEditando = linha; // guarda a linha atual em edição
-
-        // Validação ao digitar
-        function validarEdicao() {
-
-          let duplicado = false;
-
-          const ra = inputRa.value.trim();
-          const nome = inputNome.value.trim();
-
-          // Verifica se já existe outra linha com os mesmos valores
-          $('#tabelaAlunos tbody tr').not(linha).each(function () {
-            const raExistente = $(this).find('td').eq(0).find('input').val().trim();
-
-            if (raExistente === ra) {
-              duplicado = true;
-              return false; // Interrompe a verificacao
-            }
-          });
-
-          if (ra.length !== 8 || nome.length === 0 || duplicado) {
-            btn.disabled = true;
-
-            if (ra.length !== 8 || duplicado) {
-              inputRa.classList.add("inputErrado");
+                botaoExcluir = null;
             }
             else {
-              inputRa.classList.remove("inputErrado");
+                if (botaoExcluir) resetarBotaoExcluir(botaoExcluir);
+                botaoExcluir = btn;
+                btn.textContent = "Confirma?";
+                btn.classList.remove("btn-outline-danger");
+                btn.classList.add("btn-danger");
             }
-
-            if (nome.length === 0) {
-              inputNome.classList.add("inputErrado");
-            }
-            else {
-              inputNome.classList.remove("inputErrado")
-            }
-          }
-          else {
-            btn.disabled = false;
-            inputRa.classList.remove("inputErrado");
-            inputNome.classList.remove("inputErrado");
-          }
-        }
-
-        validarEdicao();
-
-        inputRa.onkeyup = validarEdicao;
-        inputNome.onkeyup = validarEdicao;
-      }
-    }
-  });
-
-  // CLICAR FORA CANCELA A EDIÇÃO (Botao "editar" / todos os elementos)
-  document.addEventListener("click", (event) => {
-
-    // nada a fazer se nenhuma linha está em edição
-    if (!linhaEditando) return;
-
-    const clicouDentroDaLinha = linhaEditando.contains(event.target);
-
-    // Só cancela se clicou FORA da linha e NÃO foi no botão de nota
-    if (!clicouDentroDaLinha) {
-      const linha = linhaEditando;
-      const btnEditar = linha.querySelector(".btn-editar");
-      const inputsNotas = linha.querySelectorAll(".nota");
-      const inputRa = linha.querySelector("input.ra");
-      const inputNome = linha.querySelector("input.nome");
-      const btnLapis = linha.querySelectorAll(".btn-editar-nota");
-
-      // RESTAURA OS VALORES ORIGINAIS
-      inputRa.value = valoresOriginaisLinha.ra;
-      inputNome.value = valoresOriginaisLinha.nome;
-      inputsNotas.forEach((input, index) => {
-        input.value = valoresOriginaisLinha.notas[index];
-      });
-
-      // Restaura estado original
-      inputsNotas.forEach(input => input.disabled = true);
-      inputRa.disabled = true;
-      inputNome.disabled = true;
-      btnLapis.forEach(btn => btn.style.display = "flex");
-
-      btnEditar.textContent = "Editar";
-      btnEditar.classList.remove("btn-success");
-      btnEditar.classList.add("btn-outline-secondary");
-      btnEditar.disabled = false;
-
-      inputRa.classList.remove("inputErrado");
-      inputNome.classList.remove("inputErrado");
-
-      // Limpa os parametros
-      btnEditar.disabled = false;
-      linhaEditando = null;
-      valoresOriginaisLinha = null;
-    }
-  });
-
-  // CLICAR FORA CANCELA A EDIÇÃO (Botao lapis / somente um elemento)
-  document.addEventListener("click", (event) => {
-    // Nada a fazer se nenhuma nota está em edição
-    if (!notaEditando) return;
-
-    // Seleciona a nota e o botao que foram acionados
-    const td = notaEditando.closest("td");
-    const clicouNoBotao = event.target.closest(".btn-editar-nota");
-
-    // Se clicou fora da célula e fora do botão, reseta
-    if (!td.contains(event.target) && !clicouNoBotao) {
-      const inputNota = td.querySelector("input.nota");
-
-      // RESTAURA O VALOR ORIGINAL
-      inputNota.value = valorOriginalNota;
-
-      inputNota.disabled = true;
-      notaEditando.textContent = "✏️";
-      notaEditando.classList.remove("btn-outline-success");
-      notaEditando.classList.add("btn-outline-secondary");
-
-      // Limpa os parametros 
-      notaEditando = null;
-      valorOriginalNota = null;
-    }
-  });
-
-  // Função para remover aluno
-  document.addEventListener("click", function (event) {
-    const btn = event.target;
-
-    if (btn.classList.contains("btn-excluir")) {
-      event.preventDefault();
-      event.stopPropagation();
-
-      if (btn === botaoExcluir) {
-        const linha = btn.closest("tr");
-        linha.remove();
-        botaoExcluir = null;
-      }
-      else {
-        if (botaoExcluir) {
-          resetarBotaoExcluir(botaoExcluir);
-        }
-        botaoExcluir = btn;
-        btn.textContent = "Confirma?";
-        btn.classList.remove("btn-outline-danger");
-        btn.classList.add("btn-danger");
-      }
-    }
-    else {
-      if (botaoExcluir) {
-        resetarBotaoExcluir(botaoExcluir);
-        botaoExcluir = null;
-      }
-    }
-  });
-
-  // Função para restaurar o botão excluir ao estado original
-  function resetarBotaoExcluir(btn) {
-    btn.textContent = "Excluir";
-    btn.classList.remove("btn-danger");
-    btn.classList.add("btn-outline-danger");
-  }
-
-  // Botão voltar para página anterior
-  btnVoltar.addEventListener('click', function (event) {
-    event.preventDefault();
-    window.history.back();
-  });
-
-  // Botão que faz o modal de nota aparecer
-  btnNota.addEventListener('click', function (event) {
-
-    // Mostra o modal
-    $('#modalCadastrarNota').modal('show');
-
-    // Desabilita botões e mostra aviso
-    btnSalvarNota.disabled = true;
-    btnAdd.disabled = true;
-    avisoCadastrarNota.style.display = "flex";
-  });
-
-  // Evento para quando o modal for fechado (limpa os dados)
-  $('#modalCadastrarNota').on('hidden.bs.modal', function () {
-
-    // Limpa a lista e volta ao estado inicial
-    lista.innerHTML = "";
-    nomeInput.disabled = false;
-    pesoInput.disabled = false;
-    btnSalvarNota.disabled = true;
-    pesoFinal = 0;
-  });
-
-  // Declarando constantes para criar/alterar/excluir o componente nota
-  const btnAdd = document.querySelector("#btnAddComponente");
-  const btnSalvarNota = document.querySelector("#btnSalvarNota");
-  const nomeInput = document.querySelector("#nomeComponente");
-  const pesoInput = document.querySelector("#pesoComponente");
-  const lista = document.querySelector("#listaComponentes");
-  const formNota = document.querySelector("#formNota");
-  const avisoNome = document.querySelector("#avisoNomeComponente");
-  const avisoCadastrarNota = document.querySelector("#avisoCadastrarNota");
-
-  // Variável para guardar o peso total acumulado (inicia em 0)
-  let pesoFinal = 0;
-
-  // Aplica a máscara ao peso (formata como 99.99)
-  $('#pesoComponente').mask('999.99');
-
-  // Evento para adicionar '%' ao sair do campo 
-  $('#pesoComponente').on('blur', function () {
-    let val = $(this).val().trim();
-    if (val && !val.includes('%')) {
-      $(this).val(val + '%');
-    }
-  });
-
-  // Aplica a máscara ao nome (Uma letra e um número, ex.: N1, T2, P3)
-  $('#nomeComponente').mask('A0', {
-    translation: {
-      'A': { pattern: /[A-Za-z]/ }, // qualquer letra
-      '0': { pattern: /[0-9]/ }     // um número
-    }
-  });
-  // Converte letras minúsculas em maiúsculas enquanto o usuário digita
-  $('#nomeComponente').on('input', function () {
-    $(this).val($(this).val().replace(/[a-z]/g, function (letra) {
-      return letra.toUpperCase();
-    }));
-  });
-
-  // Adiciona eventos
-  nomeInput.onkeyup = onInputKeyUpComponente;
-  pesoInput.onkeyup = onInputKeyUpComponente;
-
-  // Validação dos campos Nome e Pes
-  function onInputKeyUpComponente(_event) {
-    const target = _event.target; // O campo que disparou o evento
-
-    let nomeDuplicado = false;
-
-    // Habilita os inputs se o peso final for menor que 100
-    if (pesoFinal < 100) {
-      nomeInput.disabled = false;
-      pesoInput.disabled = false;
-      btnSalvarNota.disabled = true;
-      avisoCadastrarNota.style.display = "flex";
-    }
-
-    // Sempre pega o valor atual do nome (independente de qual campo está sendo alterado)
-    const valorNome = nomeInput.value.trim().toUpperCase();
-    const isNomeValido = /^[A-Za-z][0-9]$/.test(valorNome);
-
-    // Coleta todos os nomes já cadastrados
-    const nomesExistentes = Array.from(lista.querySelectorAll("li"))
-      .map(li => li.textContent.split(" - ")[0].trim().toUpperCase());
-
-    // Atualiza se o nome já existe
-    nomeDuplicado = nomesExistentes.includes(valorNome);
-
-    // Valida o campo nome apenas se o usuário está digitando nele
-    if (target.id === 'nomeComponente') {
-      if (!isNomeValido || nomeDuplicado) {
-        nomeInput.classList.add("inputErrado");
-        avisoNome.style.display = "flex";
-
-        if (nomeDuplicado) {
-          avisoNome.textContent = `O componente ${valorNome} já foi adicionado.`;
         }
         else {
-          avisoNome.textContent = "Use o formato letra + número (ex: N1, T2).";
+            if (botaoExcluir) {
+                resetarBotaoExcluir(botaoExcluir);
+                botaoExcluir = null;
+            }
         }
-      } else {
-        nomeInput.classList.remove("inputErrado");
-        avisoNome.style.display = "none";
-      }
+    });
+
+    function resetarBotaoExcluir(btn) {
+        btn.textContent = "Excluir";
+        btn.classList.remove("btn-danger");
+        btn.classList.add("btn-outline-danger");
     }
 
-    // Validação do campo peso
-    if (target.id === 'pesoComponente') {
-      let valorPeso = pesoInput.value.replace('%', '').trim();
-      let numPeso = parseFloat(valorPeso);
+    // ======== MODAL DE CADASTRAR/SELECIONAR CÁLCULO DAS NOTAS ========
+    const btnAdd = document.querySelector("#btnAddComponente");
+    const btnProximoFormula = document.querySelector("#btnProximoFormula");
+    const btnVoltarComponentes = document.querySelector("#btnVoltarComponentes");
+    const btnSalvarFormula = document.querySelector("#btnSalvarFormula");
+    const btnCriarNovo = document.querySelector("#btnCriarNovo");
+    const btnEditarComponentes = document.querySelector("#btnEditarComponentes");
+    const btnVoltarSelecao = document.querySelector("#btnVoltarSelecao");
+    const btnAtualizarFormula = document.querySelector("#btnAtualizarFormula");
+    const nomeInput = document.querySelector("#nomeComponente");
+    const descricaoInput = document.querySelector("#descricaoComponente");
+    const lista = document.querySelector("#listaComponentes");
+    const formNota = document.querySelector("#formNota");
+    const avisoNome = document.querySelector("#avisoNomeComponente");
+    const avisoComponentes = document.querySelector("#avisoComponentes");
+    const inputFormula = document.querySelector("#inputFormula");
+    const avisoFormula = document.querySelector("#avisoFormula");
+    const componentesDisponiveis = document.querySelector("#componentesDisponiveis");
 
-      const pesoDisponivel = 100 - pesoFinal;
-      if (!isNaN(numPeso) && numPeso > pesoDisponivel) {
-        numPeso = pesoDisponivel;
-        pesoInput.value = numPeso.toFixed(2) + '%';
-      }
+    const etapaSelecao = document.querySelector("#etapaSelecao");
+    const etapaComponentes = document.querySelector("#etapaComponentes");
+    const etapaFormula = document.querySelector("#etapaFormula");
+    const etapaEditarComponentes = document.querySelector("#etapaEditarComponentes");
 
-      if (pesoInput.value.trim().length === 0) {
-        pesoInput.classList.add("inputErrado");
-      }
-      else {
-        pesoInput.classList.remove("inputErrado");
-      }
-    }
+    let componentesAdicionados = [];
+    let componentesParaEditar = [];
+    let formulaAtual = null;
 
-    // Verifica se ambos os campos não estão vazios
-    const camposNotEmpty = (
-      nomeInput.value.trim().length > 0 &&
-      pesoInput.value.trim().length > 0
-    );
-
-    // Habilita o botão apenas se tudo for válido e o nome não for duplicado
-    btnAdd.disabled = (!camposNotEmpty || nomeDuplicado || !isNomeValido);
-  }
-
-  // Evento de submit do formulário
-  formNota.addEventListener("submit", (event) => {
-    event.preventDefault(); // Impede o reload da página
-
-    const nome = nomeInput.value.trim();
-    const pesoStr = pesoInput.value.replace('%', '').trim();
-    const peso = parseFloat(pesoStr);
-
-    // Adiciona o peso ao total
-    pesoFinal += peso;
-
-    // Cria um novo item na lista (<li>)
-    const novoItem = document.createElement("li");
-    novoItem.className = "list-group-item d-flex justify-content-between align-items-center";
-    novoItem.innerHTML = `
-      ${nome} - ${peso.toFixed(2)}% da média final
-      <button class="btn btn-sm btn-outline-danger btn-excluir-componente" title="Excluir componente">Excluir</button>
-    `;
-
-    // Adiciona à lista
-    lista.appendChild(novoItem);
-
-    // Verifica se o peso final atingiu ou passou de 100%
-    if (pesoFinal >= 100) {
-      // Bloqueia os inputs e botão de adicionar
-      btnAdd.disabled = true;
-      nomeInput.disabled = true;
-      pesoInput.disabled = true;
-      // Habilita o botão de salvar nota
-      btnSalvarNota.disabled = false;
-      avisoCadastrarNota.style.display = "none";
-    }
-    else {
-      // Mantém inputs habilitados e botão de salvar desabilitado
-      btnAdd.disabled = true; // porque o formulário será resetado
-      nomeInput.disabled = false;
-      pesoInput.disabled = false;
-      btnSalvarNota.disabled = true;
-      avisoCadastrarNota.style.display = "flex";
-    }
-
-    // Limpa o formulário
-    formNota.reset();
-    btnAdd.disabled = true;
-
-    // Reaplica máscaras após reset
-    $('#pesoComponente').mask('999.99');
+    // Máscara para o nome do componente
     $('#nomeComponente').mask('A0', {
-      translation: {
-        'A': { pattern: /[A-Za-z]/ },
-        '0': { pattern: /[0-9]/ }
-      }
-    });
-  });
-
-  // Evento para excluir componente da nota (Ex N1)
-  lista.addEventListener("click", (event) => {
-    if (event.target.classList.contains("btn-excluir-componente")) {
-      const item = event.target.closest("li");
-      const texto = item.textContent; // Ex.: "N1 - 50.00% Excluir"
-      const pesoMatch = texto.match(/(\d+\.\d+)%/); // Extrai o peso
-      if (pesoMatch) {
-        const peso = parseFloat(pesoMatch[1]);
-        pesoFinal -= peso; // Subtrai do total
-      }
-
-      // Remove o item
-      item.remove();
-
-      // Verifica se o peso final atingiu ou passou de 100%
-      if (pesoFinal < 100) {
-
-        nomeInput.disabled = false;
-        pesoInput.disabled = false;
-
-        // Desabilita o botão de salvar nota
-        btnSalvarNota.disabled = true;
-        avisoCadastrarNota.style.display = "flex";
-      }
-    }
-  });
-
-  // Função para resetar o botão "salvarNota" para o estado original
-  function resetBtn() {
-    btnSalvarNota.textContent = "Salvar Nota";
-    btnSalvarNota.dataset.confirm = "false";
-    document.removeEventListener("click", clickFora);
-  }
-
-  // Função que trata clique fora do botão "salvarNota"
-  function clickFora(event) {
-    if (event.target !== btnSalvarNota) {
-      resetBtn();
-    }
-  }
-
-  // Função que atualiza a tabela quando a nota e gerada
-  function atualizarTabelaComponentes() {
-    const thead = tabela.querySelector("thead tr.tabelaAlunos");
-    const tbody = tabela.querySelector("tbody");
-
-    // Remove colunas de notas antigas (mantém RA, Nome e Ações)
-    while (thead.children.length > 2 && !thead.lastElementChild.classList.contains("text-center")) {
-      thead.removeChild(thead.children[2]);
-    }
-
-    // Adiciona colunas de notas dinamicamente
-    componentesNota.forEach(comp => {
-      const th = document.createElement("th");
-      th.classList.add("headerNotas");
-      th.textContent = comp.nome;
-      thead.insertBefore(th, thead.querySelector("th.text-center"));
-    });
-
-    // Adiciona a coluna de Média Final (se não existir)
-    if (!thead.querySelector(".headerMediaFinal")) {
-      const thMedia = document.createElement("th");
-      thMedia.classList.add("headerMediaFinal");
-      thMedia.textContent = "MF";
-      thead.insertBefore(thMedia, thead.querySelector("th.text-center"));
-    }
-
-    // Atualiza cada linha da tabela
-    tbody.querySelectorAll("tr").forEach(linha => {
-      // Remove antigas células de nota e média, preservando RA, Nome e Ações
-      const celulas = Array.from(linha.children);
-      celulas.forEach(td => {
-        if (!td.classList.contains("td-acoes") && !td.querySelector(".ra") && !td.querySelector(".nome")) {
-          td.remove();
+        translation: {
+            'A': { pattern: /[A-Za-z]/ },
+            '0': { pattern: /[0-9]/ }
         }
-      });
+    });
 
-      // Adiciona células de notas conforme os componentes
-      componentesNota.forEach(comp => {
-        const td = document.createElement("td");
-        td.innerHTML = `
-        <div class="nota-container d-flex align-items-center">
-          <input type="text" class="nota form-control form-control-sm me-2" data-componente="${comp.nome}" disabled>
-          <button class="btn btn-sm btn-outline-secondary btn-editar-nota">✏️</button>
+    $('#nomeComponente').on('input', function () {
+        $(this).val($(this).val().replace(/[a-z]/g, letra => letra.toUpperCase()));
+    });
+
+    // Validação do nome do componente
+    nomeInput.onkeyup = function () {
+        const valorNome = nomeInput.value.trim().toUpperCase();
+        const isNomeValido = /^[A-Za-z][0-9]$/.test(valorNome);
+        const nomeDuplicado = componentesAdicionados.some(c => c.name === valorNome);
+
+        if (!isNomeValido || nomeDuplicado) {
+            nomeInput.classList.add("inputErrado");
+            avisoNome.style.display = "flex";
+            avisoNome.textContent = nomeDuplicado ?
+                `O componente ${valorNome} já foi adicionado.` :
+                "Use o formato letra + número (ex: N1, T2).";
+            btnAdd.disabled = true;
+        } else {
+            nomeInput.classList.remove("inputErrado");
+            avisoNome.style.display = "none";
+            btnAdd.disabled = nomeInput.value.trim().length === 0;
+        }
+    };
+
+    // Adicionar componente
+    formNota.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const nome = nomeInput.value.trim().toUpperCase();
+        const descricao = descricaoInput.value.trim() || nome;
+
+        if (!nome) return;
+
+        // Verifica duplicata antes de adicionar
+        const nomeDuplicado = componentesAdicionados.some(c => c.name === nome);
+        if (nomeDuplicado) {
+            alert(`O componente ${nome} já foi adicionado.`);
+            return;
+        }
+
+        componentesAdicionados.push({ name: nome, description: descricao });
+
+        const novoItem = document.createElement("li");
+        novoItem.className = "list-group-item d-flex justify-content-between align-items-center";
+        novoItem.dataset.componentName = nome;
+        novoItem.innerHTML = `
+            <div>
+                <strong>${nome}</strong> - ${descricao}
+            </div>
+            <button class="btn btn-sm btn-outline-danger btn-excluir-componente">Excluir</button>
+        `;
+
+        lista.appendChild(novoItem);
+
+        formNota.reset();
+        btnAdd.disabled = true;
+
+        // Reaplica máscara
+        $('#nomeComponente').mask('A0', {
+            translation: {
+                'A': { pattern: /[A-Za-z]/ },
+                '0': { pattern: /[0-9]/ }
+            }
+        });
+
+        // Atualiza estado do botão próximo e aviso
+        if (componentesAdicionados.length >= 2) {
+            btnProximoFormula.disabled = false;
+            avisoComponentes.style.display = "none";
+        } else {
+            btnProximoFormula.disabled = true;
+            avisoComponentes.style.display = "flex";
+        }
+    });
+
+    // Excluir componente
+    lista.addEventListener("click", (event) => {
+        if (event.target.classList.contains("btn-excluir-componente")) {
+            const item = event.target.closest("li");
+            const nome = item.dataset.componentName;
+
+            componentesAdicionados = componentesAdicionados.filter(c => c.name !== nome);
+            item.remove();
+
+            // Atualiza estado do botão próximo e aviso
+            if (componentesAdicionados.length >= 2) {
+                btnProximoFormula.disabled = false;
+                avisoComponentes.style.display = "none";
+            } else {
+                btnProximoFormula.disabled = true;
+                avisoComponentes.style.display = "flex";
+            }
+        }
+    });
+
+    // Próximo: Ir para etapa de fórmula
+    btnProximoFormula.addEventListener("click", () => {
+        etapaComponentes.style.display = "none";
+        etapaFormula.style.display = "block";
+
+        // Mostra componentes disponíveis
+        componentesDisponiveis.innerHTML = "";
+        componentesAdicionados.forEach(comp => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "btn btn-sm btn-outline-primary";
+            btn.textContent = comp.name;
+            btn.onclick = () => {
+                inputFormula.value += comp.name;
+                inputFormula.focus();
+                validarFormula();
+            };
+            componentesDisponiveis.appendChild(btn);
+        });
+    });
+
+    // Voltar para componentes
+    btnVoltarComponentes.addEventListener("click", () => {
+        etapaFormula.style.display = "none";
+        etapaComponentes.style.display = "block";
+    });
+
+    // Validar fórmula
+    inputFormula.onkeyup = validarFormula;
+
+    function validarFormula() {
+        const formula = inputFormula.value.trim();
+
+        if (formula.length === 0) {
+            btnSalvarFormula.disabled = true;
+            avisoFormula.style.display = "none";
+            return;
+        }
+
+        // Verifica se todos os componentes estão na fórmula
+        const componentesFaltando = componentesAdicionados.filter(comp => {
+            const regex = new RegExp(comp.name, 'gi');
+            return !regex.test(formula);
+        });
+
+        if (componentesFaltando.length > 0) {
+            const nomes = componentesFaltando.map(c => c.name).join(', ');
+            avisoFormula.textContent = `Fórmula incompleta! Faltam os componentes: ${nomes}`;
+            avisoFormula.style.display = "flex";
+            avisoFormula.style.color = "red";
+            btnSalvarFormula.disabled = true;
+            return;
+        }
+
+        try {
+            // Substitui os componentes por valores de teste (todos = 1)
+            // Aceita tanto maiúsculas quanto minúsculas
+            let formulaTeste = formula;
+            componentesAdicionados.forEach(comp => {
+                // Substitui tanto maiúsculas quanto minúsculas
+                formulaTeste = formulaTeste.replace(new RegExp(comp.name, 'gi'), '1');
+            });
+
+            // Avalia a fórmula
+            const resultado = eval(formulaTeste);
+
+            // Verifica se o resultado é exatamente 1
+            if (isNaN(resultado) || resultado < 0) {
+                avisoFormula.textContent = "Fórmula inválida! Com todas as notas = 1, o resultado deve ser 1.";
+                avisoFormula.style.display = "flex";
+                avisoFormula.style.color = "red";
+                btnSalvarFormula.disabled = true;
+            } else if (Math.abs(resultado - 1) > 0.01) {
+                avisoFormula.textContent = `Atenção: Com todas as notas = 1, o resultado é ${resultado.toFixed(2)}. Deveria ser 1.`;
+                avisoFormula.style.display = "flex";
+                avisoFormula.style.color = "orange";
+                btnSalvarFormula.disabled = true;
+            } else {
+                avisoFormula.textContent = `✓ Fórmula válida! Resultado com notas 1: ${resultado.toFixed(2)}`;
+                avisoFormula.style.display = "flex";
+                avisoFormula.style.color = "green";
+                btnSalvarFormula.disabled = false;
+            }
+        } catch (error) {
+            avisoFormula.textContent = "Fórmula inválida! Verifique a sintaxe.";
+            avisoFormula.style.display = "flex";
+            avisoFormula.style.color = "red";
+            btnSalvarFormula.disabled = true;
+        }
+    }
+
+    function atualizarTabelaComponentes() {
+        const thead = tabela.querySelector("thead tr.tabelaAlunos");
+        const tbody = tabela.querySelector("tbody");
+
+        while (thead.children.length > 3) {
+            thead.removeChild(thead.children[2]);
+        }
+
+        const thAcoes = thead.querySelector("th.text-center");
+
+        componentesNota.forEach(comp => {
+            const th = document.createElement("th");
+            th.classList.add("headerNotas");
+            th.innerHTML = `
+        <div style="text-indent: -37.5px;" class="d-flex align-items-center justify-content-center">
+          <span>${comp.nome}</span>
+          <button class="btn btn-sm btn-outline-secondary btn-editar-nota"
+            data-componente="${comp.nome}" title="Editar notas de ${comp.nome}">
+            <i class="bi bi-pencil-square"></i>
+          </button>
         </div>
       `;
-        linha.insertBefore(td, linha.querySelector(".td-acoes"));
-      });
+            thead.insertBefore(th, thAcoes);
+        });
 
-      // Adiciona a célula da média final (se não existir)
-      if (!linha.querySelector(".mediaFinal")) {
-        const tdMedia = document.createElement("td");
-        tdMedia.innerHTML = `
-        <input type="text" value="" disabled class="mediaFinal form-control form-control-sm" style="width: 46px;">
-      `;
-        linha.insertBefore(tdMedia, linha.querySelector(".td-acoes"));
-      }
-    });
-  }
-
-  // Salva o componente da nota e guarda 
-  btnSalvarNota.addEventListener("click", (event) => {
-    if (btnSalvarNota.dataset.confirm !== "true") {
-      event.preventDefault();
-      btnSalvarNota.textContent = "Confirma?";
-      btnSalvarNota.dataset.confirm = "true";
-      setTimeout(() => document.addEventListener("click", clickFora), 0);
-    }
-    else {
-      resetBtn();
-
-      // ---- REMOVE AS NOTAS ANTIGAS ----
-      const thead = tabela.querySelector("thead tr.tabelaAlunos");
-      const tbody = tabela.querySelector("tbody");
-
-      if (thead && tbody) {
-        while (thead.children.length > 3) {
-          thead.removeChild(thead.children[2]);
-        }
+        const thMedia = document.createElement("th");
+        thMedia.classList.add("headerMediaFinal");
+        thMedia.textContent = "MF";
+        thead.insertBefore(thMedia, thAcoes);
 
         tbody.querySelectorAll("tr").forEach(linha => {
-          while (linha.children.length > 3) {
-            linha.removeChild(linha.children[2]);
-          }
+            const tds = Array.from(linha.children);
+            tds.forEach(td => {
+                if (!td.classList.contains("td-acoes") &&
+                    !td.querySelector(".ra") &&
+                    !td.querySelector(".nome")) {
+                    td.remove();
+                }
+            });
+
+            const tdAcoes = linha.querySelector(".td-acoes");
+
+            componentesNota.forEach(comp => {
+                const td = document.createElement("td");
+                td.innerHTML = `
+        <input type="text"
+               class="nota form-control form-control-sm me-2"
+               data-componente="${comp.nome}"
+               data-component-id="${comp.id}"
+               disabled>
+      `;
+                linha.insertBefore(td, tdAcoes);
+            });
+
+            const tdMedia = document.createElement("td");
+            tdMedia.style.textAlign = "center";
+            tdMedia.innerHTML = `
+      <input type="text" class="mediaFinal form-control form-control-sm"
+             disabled style="width:50px; text-align:center;">
+    `;
+            linha.insertBefore(tdMedia, tdAcoes);
         });
-      }
-
-      componentesNota = [];
-      lista.querySelectorAll("li").forEach(li => {
-        const texto = li.textContent.trim();
-        const match = texto.match(/^(.+?) - (\d+(\.\d+)?)%/);
-        if (match) {
-          componentesNota.push({ nome: match[1].trim(), peso: parseFloat(match[2]) });
-        }
-      });
-
-      temNotas = componentesNota.length > 0; // Atualiza a flag
-      atualizarTabelaComponentes(); // Gera as colunas dinamicamente
-
-      $('#modalCadastrarNota').modal('hide');
     }
-  });
+
+    // Salvar fórmula no backend
+    btnSalvarFormula.addEventListener("click", async () => {
+        // Normaliza a fórmula para maiúsculas antes de salvar
+        let formula = inputFormula.value.trim();
+
+        // Substitui todos os componentes para maiúsculas na fórmula
+        componentesAdicionados.forEach(comp => {
+            formula = formula.replace(new RegExp(comp.name, 'gi'), comp.name.toUpperCase());
+        });
+
+        const payload = {
+            subjectId: parseInt(subjectId),
+            components: componentesAdicionados,
+            formula: formula
+        };
+
+        try {
+            const response = await fetch(`${API_URL}/grade-components`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                formulaAtual = formula;
+                await carregarComponentesNota();
+                $('#modalCadastrarNota').modal('hide');
+                alert('Cálculo de notas salvo com sucesso!');
+            } else {
+                const errorData = await response.json();
+                console.error('Erro do servidor:', errorData);
+                alert('Erro ao salvar cálculo de notas: ' + (errorData.error || 'Erro desconhecido'));
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao conectar com o servidor');
+        }
+    });
+
+    // Abrir modal
+    btnNota.addEventListener('click', async function () {
+        // Reseta o estado inicial
+        lista.innerHTML = "";
+        componentesAdicionados = [];
+        btnProximoFormula.disabled = true;
+        avisoComponentes.style.display = "flex";
+        inputFormula.value = "";
+        nomeInput.value = "";
+        descricaoInput.value = "";
+        btnAdd.disabled = true;
+
+        // Verifica se já existe cálculo cadastrado
+        try {
+            const response = await fetch(`${API_URL}/grade-components/subject/${subjectId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+
+                if (data.components && data.components.length > 0) {
+                    // Já existe cálculo - mostra opção de selecionar ou criar novo
+                    etapaSelecao.style.display = "block";
+                    etapaComponentes.style.display = "none";
+                    etapaFormula.style.display = "none";
+                } else {
+                    // Não existe - vai direto para criar
+                    etapaSelecao.style.display = "none";
+                    etapaComponentes.style.display = "block";
+                    etapaFormula.style.display = "none";
+                }
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+        }
+
+        $('#modalCadastrarNota').modal('show');
+    });
+
+    // Botão editar componentes
+    btnEditarComponentes.addEventListener('click', async () => {
+        // Carrega componentes existentes
+        try {
+            const response = await fetch(`${API_URL}/grade-components/subject/${subjectId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                componentesParaEditar = data.components.map(c => ({
+                    id: c.id,
+                    name: c.name,
+                    description: c.description
+                }));
+
+                mostrarComponentesParaEditar();
+
+                etapaSelecao.style.display = "none";
+                etapaEditarComponentes.style.display = "block";
+                etapaComponentes.style.display = "none";
+                etapaFormula.style.display = "none";
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao carregar componentes');
+        }
+    });
+
+    function mostrarComponentesParaEditar() {
+        const lista = document.querySelector("#listaComponentesExistentes");
+        lista.innerHTML = "";
+
+        componentesParaEditar.forEach((comp, index) => {
+            const item = document.createElement("li");
+            item.className = "list-group-item d-flex justify-content-between align-items-center";
+            item.innerHTML = `
+                <div>
+                    <strong>${comp.name}</strong> - ${comp.description}
+                </div>
+                <button class="btn btn-sm btn-outline-danger btn-remover-comp" data-index="${index}">Remover</button>
+            `;
+            lista.appendChild(item);
+        });
+
+        // Valida botão atualizar fórmula
+        btnAtualizarFormula.disabled = componentesParaEditar.length < 2;
+    }
+
+    // Remover componente
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('btn-remover-comp')) {
+            const index = parseInt(e.target.dataset.index);
+
+            if (componentesParaEditar.length <= 2) {
+                alert('Você precisa ter pelo menos 2 componentes!');
+                return;
+            }
+
+            componentesParaEditar.splice(index, 1);
+            mostrarComponentesParaEditar();
+        }
+    });
+
+    // Adicionar novo componente na edição
+    const formNovoComponente = document.querySelector("#formNovoComponente");
+    const nomeNovoInput = document.querySelector("#nomeNovoComponente");
+    const descricaoNovoInput = document.querySelector("#descricaoNovoComponente");
+    const avisoNomeNovo = document.querySelector("#avisoNomeNovoComponente");
+    const btnAddNovo = document.querySelector("#btnAddNovoComponente");
+
+    $('#nomeNovoComponente').mask('A0', {
+        translation: {
+            'A': { pattern: /[A-Za-z]/ },
+            '0': { pattern: /[0-9]/ }
+        }
+    });
+
+    $('#nomeNovoComponente').on('input', function () {
+        $(this).val($(this).val().replace(/[a-z]/g, letra => letra.toUpperCase()));
+    });
+
+    nomeNovoInput.onkeyup = function () {
+        const valorNome = nomeNovoInput.value.trim().toUpperCase();
+        const isNomeValido = /^[A-Za-z][0-9]$/.test(valorNome);
+        const nomeDuplicado = componentesParaEditar.some(c => c.name === valorNome);
+
+        if (!isNomeValido || nomeDuplicado) {
+            nomeNovoInput.classList.add("inputErrado");
+            avisoNomeNovo.style.display = "flex";
+            avisoNomeNovo.textContent = nomeDuplicado ?
+                `O componente ${valorNome} já existe.` :
+                "Use o formato letra + número (ex: N1, T2).";
+            btnAddNovo.disabled = true;
+        } else {
+            nomeNovoInput.classList.remove("inputErrado");
+            avisoNomeNovo.style.display = "none";
+            btnAddNovo.disabled = false;
+        }
+    };
+
+    formNovoComponente.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const nome = nomeNovoInput.value.trim().toUpperCase();
+        const descricao = descricaoNovoInput.value.trim() || nome;
+
+        if (!nome) return;
+
+        componentesParaEditar.push({ name: nome, description: descricao });
+        mostrarComponentesParaEditar();
+
+        formNovoComponente.reset();
+        btnAddNovo.disabled = true;
+
+        // Reaplica máscara
+        $('#nomeNovoComponente').mask('A0', {
+            translation: {
+                'A': { pattern: /[A-Za-z]/ },
+                '0': { pattern: /[0-9]/ }
+            }
+        });
+    });
+
+    // Voltar para seleção
+    btnVoltarSelecao.addEventListener('click', () => {
+        etapaEditarComponentes.style.display = "none";
+        etapaSelecao.style.display = "block";
+        componentesParaEditar = [];
+    });
+
+    // Atualizar fórmula - redireciona para a tela de fórmulas
+    btnAtualizarFormula.addEventListener('click', async () => {
+        if (componentesParaEditar.length < 2) {
+            alert('Você precisa ter pelo menos 2 componentes!');
+            return;
+        }
+
+        try {
+            // Salva os componentes editados mantendo a fórmula atual
+            const response = await fetch(`${API_URL}/grade-components/subject/${subjectId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const formulaAtualBanco = data.formula;
+
+                // Salva componentes editados
+                const saveResponse = await fetch(`${API_URL}/grade-components`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        subjectId: parseInt(subjectId),
+                        components: componentesParaEditar,
+                        formula: formulaAtualBanco
+                    })
+                });
+
+                if (saveResponse.ok) {
+                    // Fecha o modal e vai para a etapa de fórmula
+                    etapaEditarComponentes.style.display = "none";
+                    etapaFormula.style.display = "block";
+
+                    // Atualiza os componentes disponíveis
+                    componentesAdicionados = componentesParaEditar.map(c => ({
+                        name: c.name,
+                        description: c.description
+                    }));
+
+                    // Mostra componentes disponíveis
+                    componentesDisponiveis.innerHTML = "";
+                    componentesAdicionados.forEach(comp => {
+                        const btn = document.createElement("button");
+                        btn.type = "button";
+                        btn.className = "btn btn-sm btn-outline-primary";
+                        btn.textContent = comp.name;
+                        btn.onclick = () => {
+                            inputFormula.value += comp.name;
+                            inputFormula.focus();
+                            validarFormula();
+                        };
+                        componentesDisponiveis.appendChild(btn);
+                    });
+
+                    // Carrega a fórmula atual no input
+                    inputFormula.value = formulaAtualBanco;
+                    validarFormula();
+                } else {
+                    alert('Erro ao salvar componentes');
+                }
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao conectar com o servidor');
+        }
+    });
+
+    // Botão criar novo
+    btnCriarNovo.addEventListener('click', () => {
+        // Reseta o estado inicial
+        lista.innerHTML = "";
+        componentesAdicionados = [];
+        btnProximoFormula.disabled = true;
+        avisoComponentes.style.display = "flex";
+        inputFormula.value = "";
+        nomeInput.value = "";
+        descricaoInput.value = "";
+        btnAdd.disabled = true;
+
+        etapaSelecao.style.display = "none";
+        etapaComponentes.style.display = "block";
+        etapaFormula.style.display = "none";
+        etapaEditarComponentes.style.display = "none";
+    });
+
+    // Botão excluir cálculo
+    const btnExcluirCalculo = document.querySelector("#btnExcluirCalculo");
+    btnExcluirCalculo.addEventListener('click', async () => {
+        const confirmacao = confirm(
+            'Tem certeza que deseja excluir o calculo de notas?\n\n' +
+            'Serao excluidos:\n' +
+            '- Componentes (N1, N2, etc.)\n' +
+            '- Formula\n' +
+            '- Todas as notas dos alunos\n\n' +
+            'Esta acao nao pode ser desfeita!'
+        );
+
+        if (confirmacao) {
+            try {
+                const response = await fetch(`${API_URL}/grade-components/subject/${subjectId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    alert('Calculo excluido com sucesso!');
+                    $('#modalCadastrarNota').modal('hide');
+                    location.reload();
+                } else {
+                    alert('Erro ao excluir calculo');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao conectar com o servidor');
+            }
+        }
+    });
+
+    // Limpar ao fechar modal
+    $('#modalCadastrarNota').on('hidden.bs.modal', function () {
+        lista.innerHTML = "";
+        componentesAdicionados = [];
+        inputFormula.value = "";
+        nomeInput.value = "";
+        descricaoInput.value = "";
+        btnProximoFormula.disabled = true;
+        avisoComponentes.style.display = "flex";
+        etapaSelecao.style.display = "none";
+        etapaComponentes.style.display = "block";
+        etapaFormula.style.display = "none";
+        etapaEditarComponentes.style.display = "none";
+        componentesParaEditar = [];
+
+        // Limpa form de novo componente
+        document.querySelector("#formNovoComponente").reset();
+        btnAddNovo.disabled = true;
+    });
+
+    // Voltar
+    btnVoltar.addEventListener('click', function (event) {
+        event.preventDefault();
+        window.history.back();
+    });
+
+    // Sair
+    document.addEventListener("click", function (event) {
+        const btn = event.target;
+
+        if (btn.classList.contains("sair")) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (btn === botaoSair) {
+                localStorage.clear();
+                window.location.href = '/frontend/login/html/login.html';
+            }
+            else {
+                if (botaoSair) resetarBotaoSair(botaoSair);
+                botaoSair = btn;
+                btn.textContent = "Confirma?";
+                btn.classList.remove("btn-outline-danger");
+                btn.classList.add("btn-danger");
+            }
+        }
+        else {
+            if (botaoSair) {
+                resetarBotaoSair(botaoSair);
+                botaoSair = null;
+            }
+        }
+    });
+
+    function resetarBotaoSair(btn) {
+        btn.innerHTML = '<i class="bi bi-door-open"></i> Sair';
+        btn.classList.remove("btn-danger");
+        btn.classList.add("btn-outline-danger");
+    }
+
+    // ======== IMPORTAR/EXPORTAR CSV ========
+    const btnImportarCSV = document.querySelector("#btnImportarCSV");
+    const btnExportarCSV = document.querySelector("#btnExportarCSV");
+    const inputCSV = document.querySelector("#inputCSV");
+
+    // Botão Importar CSV
+    btnImportarCSV.addEventListener("click", () => {
+        inputCSV.click();
+    });
+
+    // Processar arquivo CSV
+    inputCSV.addEventListener("change", async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const text = e.target.result;
+            await processarCSV(text);
+        };
+        reader.readAsText(file);
+
+        // Limpa o input para permitir selecionar o mesmo arquivo novamente
+        inputCSV.value = '';
+    });
+
+    async function processarCSV(csvText) {
+        const linhas = csvText.split('\n').filter(linha => linha.trim() !== '');
+
+        if (linhas.length === 0) {
+            alert('Arquivo CSV vazio!');
+            return;
+        }
+
+        let importados = 0;
+        let duplicados = 0;
+        let erros = 0;
+
+        // Pega os RAs já existentes na turma
+        const rasExistentes = Array.from(document.querySelectorAll("#tabelaAlunos tbody .ra"))
+            .map(input => input.value.trim());
+
+        // Detecta se a primeira linha é cabeçalho (verifica se o primeiro campo é numérico)
+        let inicioLinha = 0;
+        if (linhas.length > 0) {
+            const primeiraLinha = linhas[0].trim();
+            const primeirasColunas = primeiraLinha.split(/[,;]/).map(col => col.trim().replace(/^"|"$/g, ''));
+
+            // Se o primeiro campo NÃO for 8 dígitos, é cabeçalho
+            if (primeirasColunas.length >= 2 && !/^\d{8}$/.test(primeirasColunas[0])) {
+                inicioLinha = 1; // Pula a primeira linha
+            }
+        }
+
+        for (let i = inicioLinha; i < linhas.length; i++) {
+            const linha = linhas[i].trim();
+            if (!linha) continue;
+
+            // Separa por vírgula ou ponto-e-vírgula
+            const colunas = linha.split(/[,;]/).map(col => col.trim().replace(/^"|"$/g, ''));
+
+            if (colunas.length < 2) {
+                console.warn(`Linha ${i + 1} ignorada: menos de 2 colunas`);
+                erros++;
+                continue;
+            }
+
+            const ra = colunas[0].trim();
+            const nome = removerAcentos(colunas[1].trim());
+
+            // Valida RA (exatamente 8 dígitos)
+            if (!/^\d{8}$/.test(ra)) {
+                console.warn(`Linha ${i + 1} ignorada: RA inválido (${ra}) - deve ter exatamente 8 dígitos`);
+                erros++;
+                continue;
+            }
+
+            // Valida Nome (apenas letras e espaços)
+            if (!/^[A-Za-z\s]+$/.test(nome) || nome.length === 0) {
+                console.warn(`Linha ${i + 1} ignorada: Nome inválido (${nome}) - deve conter apenas letras e espaços`);
+                erros++;
+                continue;
+            }
+
+            // Verifica duplicata
+            if (rasExistentes.includes(ra)) {
+                console.warn(`Linha ${i + 1} ignorada: RA ${ra} já existe`);
+                duplicados++;
+                continue;
+            }
+
+            // Importa o aluno
+            try {
+                const response = await fetch(`${API_URL}/students`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        classId: parseInt(classId),
+                        studentId: ra,
+                        name: nome
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    adicionarLinhaTabela(data.id, ra, nome);
+                    rasExistentes.push(ra);
+                    importados++;
+                } else {
+                    console.error(`Erro ao importar linha ${i + 1}`);
+                    erros++;
+                }
+            } catch (error) {
+                console.error(`Erro ao importar linha ${i + 1}:`, error);
+                erros++;
+            }
+        }
+
+        // Mostra resultado
+        let mensagem = `Importação concluída!\n\n`;
+        mensagem += `✅ Importados: ${importados}\n`;
+        if (duplicados > 0) mensagem += `⚠️ Duplicados (ignorados): ${duplicados}\n`;
+        if (erros > 0) mensagem += `❌ Erros: ${erros}`;
+
+        alert(mensagem);
+    }
+
+    // Botão Exportar CSV
+    // Função para remover acentos
+    function removerAcentos(texto) {
+        return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    btnExportarCSV.addEventListener("click", () => {
+        const linhas = [];
+
+        // Monta o cabeçalho apenas com RA e Nome
+        let cabecalho = 'RA;Nome';
+        linhas.push(cabecalho);
+
+        // Adiciona cada aluno apenas com RA e Nome
+        document.querySelectorAll("#tabelaAlunos tbody tr").forEach(linha => {
+            const ra = linha.querySelector(".ra").value.trim();
+            const nome = removerAcentos(linha.querySelector(".nome").value.trim());
+
+            let linhaCSV = `${ra};${nome}`;
+
+            linhas.push(linhaCSV);
+        });
+
+        // Cria o arquivo CSV
+        const csvContent = linhas.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+
+        link.setAttribute('href', url);
+        link.setAttribute('download', `alunos_${turma}_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
 
 });
