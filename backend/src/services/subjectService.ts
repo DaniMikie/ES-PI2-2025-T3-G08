@@ -184,10 +184,20 @@ export async function updateSubject(subjectId: number, name: string, code: strin
 }
 
 /**
- * Deleta disciplina (CASCADE deleta turmas e alunos)
+ * Deleta disciplina (com verificação de safe deletion)
  * subjectId - ID da disciplina
  */
 export async function deleteSubject(subjectId: number) {
+  // Verifica se existem turmas cadastradas
+  const classes = await executeQuery(
+    "SELECT COUNT(*) as count FROM classes WHERE subject_id = ?",
+    [subjectId]
+  );
+
+  if (classes[0].count > 0) {
+    throw new Error("Não é possível excluir esta disciplina pois existem turmas cadastradas. Exclua as turmas primeiro.");
+  }
+
   await executeQuery("DELETE FROM subjects WHERE id = ?", [subjectId]);
   return { success: true };
 }
