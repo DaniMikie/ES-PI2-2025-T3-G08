@@ -410,11 +410,16 @@ $(document).ready(function () {
           if (response.ok) {
             linha.remove();
           } else {
-            alert('Erro ao excluir turma');
+            const errorData = await response.json();
+            alert(errorData.error || 'Erro ao excluir turma');
+            // Reseta o botão para o estado inicial após erro
+            resetarBotaoExcluir(btn);
           }
         } catch (error) {
           console.error('Erro:', error);
           alert('Erro ao conectar com o servidor');
+          // Reseta o botão para o estado inicial após erro
+          resetarBotaoExcluir(btn);
         }
 
         botaoExcluir = null;

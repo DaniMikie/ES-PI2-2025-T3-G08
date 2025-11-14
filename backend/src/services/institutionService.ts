@@ -155,7 +155,7 @@ export async function updateInstitution(institutionId: number, userId: number, i
 }
 
 /**
- * Deleta instituição (CASCADE deleta curso, disciplinas, turmas e alunos)
+ * Deleta instituição (com verificação de safe deletion)
  * institutionId - ID da instituição
  * userId - ID do usuário (validação de propriedade)
  */
@@ -167,6 +167,18 @@ export async function deleteInstitution(institutionId: number, userId: number) {
 
   if (check.length === 0) {
     throw new Error("Instituição não encontrada");
+  }
+
+  // SAFE DELETION: Verifica se existem disciplinas cadastradas (através dos cursos)
+  const subjects = await executeQuery(
+    `SELECT COUNT(*) as count FROM subjects s
+     INNER JOIN courses c ON s.course_id = c.id
+     WHERE c.institution_id = ?`,
+    [institutionId]
+  );
+
+  if (subjects[0].count > 0) {
+    throw new Error("Não é possível excluir esta instituição e curso pois existem disciplinas cadastradas. Exclua as disciplinas primeiro.");
   }
 
   await executeQuery("DELETE FROM institutions WHERE id = ?", [institutionId]);

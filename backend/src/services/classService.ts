@@ -117,10 +117,20 @@ export async function updateClass(classId: number, name: string, code: string) {
 }
 
 /**
- * Deleta turma (CASCADE deleta alunos e notas)
+ * Deleta turma (com verificação de safe deletion)
  * classId - ID da turma
  */
 export async function deleteClass(classId: number) {
+  // SAFE DELETION: Verifica se existem alunos cadastrados
+  const students = await executeQuery(
+    "SELECT COUNT(*) as count FROM students WHERE class_id = ?",
+    [classId]
+  );
+
+  if (students[0].count > 0) {
+    throw new Error("Não é possível excluir esta turma pois existem alunos cadastrados. Exclua os alunos primeiro.");
+  }
+
   await executeQuery("DELETE FROM classes WHERE id = ?", [classId]);
   return { success: true };
 }
