@@ -1,0 +1,11 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# TypeScript
+dist/
+build/
+lib/
+
+# dotenv
+.env

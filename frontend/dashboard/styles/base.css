@@ -1,0 +1,277 @@
+body {
+    background-color: #f2f3f5;
+    margin: 0;
+}
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Logo do projeto */
+.logo-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background-color: #0d6efd;
+    border-radius: 6px;
+    color: white;
+    font-size: 16px;
+}
+
+.navbar.fixed-top {
+    height: 56px; /* altura padrão navbar bootstrap */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+}
+
+/* Sidebar fixa na lateral para telas maiores */
+.sidebar {
+    position: fixed;
+    top: 56px; /* abaixo da navbar fixa */
+    left: 0;
+    width: 240px;
+    height: calc(100vh - 56px);
+    background-color: #fff;
+    padding-top: 1rem;
+    overflow-y: auto;
+    z-index: 1;
+    transition: all 0.3s ease;
+}
+
+.sidebar a {
+    margin: 6px;
+    text-decoration: none;
+    color: #333;
+    display: block;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    transition: background 0.2s;
+}
+
+.sidebar a.active {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.sidebar a:hover {
+    background-color: #007bff;
+    color: #fff;
+    box-shadow: 0 0 14px rgba(0, 0, 0, 0.3);
+}
+
+/* Conteúdo com margem lateral para a sidebar fixa */
+.content {
+    margin-left: 250px;
+    margin-top: 56px;
+    padding-left: 3rem;
+    padding-right: 3rem;
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+    width: calc(100vw - 250px);
+    box-sizing: border-box;
+}
+
+@media (max-width: 1200px) {
+    /* Faz o card da tabela permitir scroll horizontal */
+    #tabelaDisc {
+        display: block;       /* transforma em bloco para scroll */
+        overflow-x: auto;     /* ativa barra de rolagem horizontal */
+        white-space: nowrap;  /* impede que o conteúdo quebre linha */
+    }
+}
+
+
+/* --- Responsivo para telas pequenas --- */
+@media (max-width: 767.98px) {
+    .navbar.fixed-top {
+        height: 56px;
+        position: fixed;
+        z-index: 1;
+    }
+
+    .sidebar {
+        position: static; /* sidebar entra no fluxo */
+        width: 100%;
+        height: auto; 
+        padding: 0.5rem 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        background-color: #fff;
+        border-bottom: 1px solid #ddd;
+        z-index: 2;
+    }
+
+    .sidebar a {
+        display: inline-block;
+        margin: 0 0.5rem 0.5rem 0;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+    }
+
+    .content {
+        margin-left: 0;
+        margin-top: calc(56px + 120px); /* navbar + sidebar */
+        padding: 1rem;
+    }
+}
+
+
+.card {
+    border-radius: 2rem;
+    padding: 10px;
+}
+
+.input, .form-control {
+    border-radius: 10px;
+    border: #ccc solid 2px;
+}
+
+.input:hover,
+.form-control:hover {
+    border-color: #007bff;
+    box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
+    transition: 0.2s;
+}
+
+.btn {
+    border-radius: 20px;
+}
+
+.me-3 {
+    margin-top: 3px;
+}
+
+.inputErrado {
+    border: 2px solid #ff3e3e;
+    outline: none;
+    background-color: #ffebee; 
+    transition: all 0.2s ease;
+}
+
+.inputErrado:focus {
+    border-color: #ff3e3e ;
+    box-shadow: 0 0 6px rgba(255, 62, 62, 0.5);
+    background-color: #ffebee;
+}
+
+.inputErrado:hover {
+    border-color: #dc3545;  
+    box-shadow: 0 0 6px rgba(220, 53, 69, 0.4); 
+    background-color: #ffcdd2; 
+}
+
+.titulo {
+    font-size: 1.1em;
+}
+
+.tituloPrincipal {
+    text-indent: 25px;
+}
+
+.aviso {
+    font-family: Arial, Helvetica, sans-serif;
+    text-indent: 10px;
+    font-size: 0.8em;
+    font-weight: 800;
+    color: #FF0000;
+    opacity: 75%;
+    font-style: italic;
+    margin-bottom: 10px;
+    display: none;
+}
+
+.headerRa, .headerNome {
+    text-indent: 15px;
+}
+
+.headerNotas {
+  text-indent: 20px;
+}
+
+.headerMediaFinal {
+  text-indent: 10px;
+}
+
+.nota {
+    width: 50px;     
+    text-align: center;
+}
+
+.ra, .nome {
+    width: 225px;
+    align-items: center;
+    margin-right: 20px;
+}
+
+
+.btn-editar-nota {
+    width: 25px;
+    min-width: 25px;
+    height: 25px;
+    aspect-ratio: 1/1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    padding: 2.5px;
+    margin-left: -7.5px;
+}
+
+.divBotaoeTitulo, #divBtnFechar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+#btnEditarTodos, #btnNota, #btnImportarCSV, #btnExportarCSV {
+    font-size: 0.75em;
+    font-weight: 600;
+    margin-left: 5px;
+}
+
+/* Estilos para o modal */
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Centralização com position absolute */
+.modal-dialog {
+  position: absolute ; /* Centraliza o dialog dentro do modal */
+  top: 50% ;
+  left: 50% ;
+  transform: translate(-50%, -50%) !important; /* Ajusta para o centro exato */
+  margin: 0 ; /* Remove margens */
+}
+
+/* Estilos de border-radius e padding */
+.modal-content {
+  border-radius: 1.5rem; /* Arredondamento maior nas bordas do modal */
+  border: none; /* Remove borda padrão se quiser um visual mais limpo */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); /* Sombra opcional para destaque */
+}
+
+.modal-body {
+  padding: 2rem; /* Padding interno maior para espaço ao redor do conteúdo */
+}
+
+/* Estilos para o breadcrumb navegável */
+.breadcrumb-link {
+    color: #616161;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.breadcrumb-link:hover {
+    color: #007bff;
+    text-decoration: underline;
+}
+
+.breadcrumb-atual {
+    color: #007bff;
+    text-decoration: underline;
+}
