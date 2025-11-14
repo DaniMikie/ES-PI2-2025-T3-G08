@@ -1,4 +1,9 @@
 /**
+ * Autor: Gustavo Alves e Daniela Mikie
+ * Projeto: Projeto NotaDez
+ * Arquivo: courseService.ts
+ * Data: 18/09/2025
+ * 
  * Serviço de Cursos
  * Gerencia busca de cursos
  */

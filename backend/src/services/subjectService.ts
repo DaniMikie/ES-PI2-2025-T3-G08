@@ -1,4 +1,9 @@
 /**
+ * Autor: Gustavo Alves e Daniela Mikie
+ * Projeto: Projeto NotaDez
+ * Arquivo: subjectService.ts
+ * Data: 18/09/2025
+ * 
  * Serviço de Disciplinas
  * Gerencia CRUD de disciplinas dos cursos
  */

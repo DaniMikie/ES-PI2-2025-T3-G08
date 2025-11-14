@@ -1,3 +1,13 @@
+/**
+ * Autor: Gustavo Alves e Daniela Mikie
+ * Projeto: Projeto NotaDez
+ * Arquivo: subjectRoutes.ts
+ * Data: 18/09/2025
+ * 
+ * Rotas de Disciplinas
+ * Define endpoints de CRUD de disciplinas
+ */
+
 import { Router } from "express";
 import { create, getAll, getOne, update, remove } from "../controllers/subjectController";
 import { authMiddleware } from "../middlewares/authMiddleware";

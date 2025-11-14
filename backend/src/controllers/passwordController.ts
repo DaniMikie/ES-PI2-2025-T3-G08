@@ -1,4 +1,9 @@
 /**
+ * Autor: Gustavo Alves e Daniela Mikie
+ * Projeto: Projeto NotaDez
+ * Arquivo: passwordController.ts
+ * Data: 18/09/2025
+ * 
  * Controller de Recuperação de Senha
  * Gerencia requisições HTTP de recuperação e redefinição de senha
  */

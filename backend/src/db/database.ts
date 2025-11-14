@@ -1,7 +1,11 @@
 /**
+ * Autor: Gustavo Alves e Daniela Mikie
+ * Projeto: Projeto NotaDez
+ * Arquivo: database.ts
+ * Data: 18/09/2025
+ * 
  * Configuração do banco de dados MySQL
- * Autor: Equipe PI II - PUC Campinas
- * Descrição: Gerenciamento de conexões com MySQL usando pool de conexões
+ * Gerenciamento de conexões com MySQL usando pool de conexões
  */
 
 import mysql from 'mysql2/promise';

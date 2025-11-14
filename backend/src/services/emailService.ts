@@ -1,4 +1,9 @@
 /**
+ * Autor: Gustavo Alves 
+ * Projeto: Projeto NotaDez
+ * Arquivo: emailService.ts
+ * Data: 18/09/2025
+ * 
  * Serviço de Envio de Emails
  * Utiliza Nodemailer com Gmail SMTP para enviar emails de verificação
  */

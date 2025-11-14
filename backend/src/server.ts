@@ -1,3 +1,13 @@
+/**
+ * Autor: Gustavo Alves e Daniela Mikie
+ * Projeto: Projeto NotaDez
+ * Arquivo: server.ts
+ * Data: 18/09/2025
+ * 
+ * Servidor Principal da API
+ * Configuração do Express e registro de rotas
+ */
+
 // Importações principais do Express e middlewares
 import express, { Request, Response } from "express";
 import bodyParser from "body-parser";
