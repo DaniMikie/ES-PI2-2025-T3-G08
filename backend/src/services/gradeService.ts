@@ -21,15 +21,22 @@ import { createAuditLog } from "./gradeAuditService";
 export async function saveGrade(studentId: number, gradeComponentId: number, grade: number | null, userId: number) {
   // Validação da nota: deve estar entre 0 e 10, com no máximo 2 casas decimais
   if (grade !== null) {
-    if (isNaN(grade) || grade < 0 || grade > 10) {
+    // Converte para número se vier como string
+    const gradeNum = typeof grade === 'string' ? parseFloat(grade) : grade;
+    
+    if (isNaN(gradeNum) || gradeNum < 0 || gradeNum > 10) {
       throw new Error("Nota inválida. Deve estar entre 0 e 10.");
     }
 
     // Verifica se tem no máximo 2 casas decimais
-    const decimalPlaces = (grade.toString().split('.')[1] || '').length;
+    const gradeStr = gradeNum.toString();
+    const decimalPlaces = (gradeStr.split('.')[1] || '').length;
     if (decimalPlaces > 2) {
       throw new Error("Nota inválida. Deve ter no máximo 2 casas decimais.");
     }
+
+    // Arredonda para 2 casas decimais para garantir formato correto (00.00)
+    grade = Math.round(gradeNum * 100) / 100;
   }
 
   // Verifica se já existe uma nota

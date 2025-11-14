@@ -139,29 +139,112 @@ export async function deleteStudent(id: number, userId: number) {
 }
 
 /**
- * Exporta alunos de uma turma em formato CSV
+ * Exporta alunos de uma turma em formato CSV com notas e média final
  * classId - ID da turma
  */
 export async function exportStudentsCSV(classId: number) {
   // Busca os alunos da turma ordenados por nome
   const students = await executeQuery(
-    "SELECT student_id, name FROM students WHERE class_id = ? ORDER BY name",
+    "SELECT id, student_id, name FROM students WHERE class_id = ? ORDER BY name",
     [classId]
   );
+
+  // Busca a disciplina da turma para pegar os componentes e fórmula
+  const classData = await executeQuery(
+    "SELECT subject_id FROM classes WHERE id = ?",
+    [classId]
+  );
+
+  if (classData.length === 0) {
+    throw new Error("Turma não encontrada");
+  }
+
+  const subjectId = classData[0].subject_id;
+
+  // Busca os componentes de nota da disciplina
+  const components = await executeQuery(
+    "SELECT id, name FROM grade_components WHERE subject_id = ? ORDER BY id",
+    [subjectId]
+  );
+
+  // Busca a fórmula da disciplina
+  const formulaData = await executeQuery(
+    "SELECT final_grade_formula FROM subjects WHERE id = ?",
+    [subjectId]
+  );
+
+  const formula = formulaData.length > 0 ? formulaData[0].final_grade_formula : null;
 
   // Função para remover acentos
   const removerAcentos = (texto: string) => {
     return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   };
 
-  // Monta o CSV
-  const linhas = ['RA;Nome'];
-  
-  students.forEach((student: any) => {
+  // Função para calcular média usando a fórmula
+  const calcularMedia = (notas: { [key: string]: number | null }): number | null => {
+    if (!formula) return null;
+
+    try {
+      let formulaCalculo = formula;
+      
+      // Substitui cada componente pelo seu valor
+      for (const comp of components) {
+        const nota = notas[comp.name];
+        const valorNota = nota !== null && nota !== undefined ? nota : 0;
+        formulaCalculo = formulaCalculo.replace(new RegExp(comp.name, 'gi'), valorNota.toString());
+      }
+
+      // Calcula usando Function (mais seguro que eval)
+      const resultado = new Function(`return ${formulaCalculo}`)();
+      
+      // Arredonda para 2 casas decimais
+      return Math.round(resultado * 100) / 100;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  // Monta o cabeçalho do CSV
+  let cabecalho = 'RA;Nome';
+  components.forEach((comp: any) => {
+    cabecalho += `;${comp.name}`;
+  });
+  cabecalho += ';Media Final';
+
+  const linhas = [cabecalho];
+
+  // Para cada aluno, busca suas notas
+  for (const student of students) {
     const ra = student.student_id;
     const nome = removerAcentos(student.name);
-    linhas.push(`${ra};${nome}`);
-  });
+
+    // Busca todas as notas do aluno
+    const grades = await executeQuery(
+      "SELECT grade_component_id, grade FROM grades WHERE student_id = ?",
+      [student.id]
+    );
+
+    // Mapeia as notas por componente
+    const notasPorComponente: { [key: string]: number | null } = {};
+    const gradesMap = new Map(grades.map((g: any) => [g.grade_component_id, g.grade]));
+
+    let linhaCSV = `${ra};${nome}`;
+
+    // Adiciona cada nota do componente
+    for (const comp of components) {
+      const nota = gradesMap.get(comp.id);
+      const notaFormatada = nota !== null && nota !== undefined ? nota : '';
+      linhaCSV += `;${notaFormatada}`;
+      notasPorComponente[comp.name] = (nota !== null && nota !== undefined) ? Number(nota) : null;
+    }
+
+    // Calcula e adiciona a média final
+    const media = calcularMedia(notasPorComponente);
+    const mediaFormatada = media !== null ? media : '';
+    linhaCSV += `;${mediaFormatada}`;
+
+    linhas.push(linhaCSV);
+  }
 
   return linhas.join('\n');
 }
