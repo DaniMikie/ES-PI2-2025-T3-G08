@@ -79,7 +79,7 @@ pi_2/
 
 ### Importação e Exportação
 - Importação de alunos via arquivo CSV
-- Exportação de lista de alunos (RA e Nome)
+- Exportação de lista de alunos (RA, Nome, Notas e Media Final)
 - Validação de dados durante importação
 - Remoção automática de acentos na exportação
 
