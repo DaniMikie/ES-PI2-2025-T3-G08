@@ -320,40 +320,61 @@ $(document).ready(function () {
     });
 
     // Evento para validar e formatar as notas na tabela
+    // Validação dinâmica de nota durante digitação
     $(document).on('input', '.nota', function () {
         let valor = this.value;
+
+        // Remove caracteres não numéricos exceto ponto
         valor = valor.replace(/[^0-9.]/g, '');
+
+        // Permite apenas um ponto decimal
         const partes = valor.split('.');
         if (partes.length > 2) {
             valor = partes[0] + '.' + partes[1];
         }
+
+        // Limita a 2 dígitos antes do ponto e 2 depois
         if (valor.includes('.')) {
             const [inteiro, decimal] = valor.split('.');
             valor = inteiro.slice(0, 2) + '.' + decimal.slice(0, 2);
-        }
-        else {
+        } else {
             valor = valor.slice(0, 2);
         }
+
+        // Limita o valor máximo a 10
         const num = parseFloat(valor);
         if (!isNaN(num) && num > 10) {
-            valor = '10.00';
+            valor = '10';
         }
+
         this.value = valor;
     });
 
-    // Formatar nota quando o campo perde o foco (sem salvar ainda)
+    // Formatar nota quando o campo perde o foco (remove zeros desnecessários)
     $(document).on('blur', '.nota', function () {
         const input = $(this);
         let grade = input.val().trim();
 
-        // Formata a nota removendo zeros desnecessários
-        if (grade !== '') {
-            const num = parseFloat(grade);
-            if (!isNaN(num)) {
-                // Formata nota com 1 casa decimal
-                grade = num.toFixed(1);
-                input.val(grade);
-            }
+        // Se vazio, não faz nada
+        if (grade === '' || grade === '.') {
+            input.val('');
+            return;
+        }
+
+        // Converte para número e formata
+        const num = parseFloat(grade);
+        if (!isNaN(num)) {
+            // Limita entre 0 e 10
+            const notaLimitada = Math.min(Math.max(num, 0), 10);
+
+            // Remove zeros desnecessários
+            // Ex: 10.00 → 10, 8.50 → 8.5, 7.00 → 7, 9.75 → 9.75
+            let notaFormatada = notaLimitada.toFixed(2);
+            notaFormatada = parseFloat(notaFormatada).toString();
+
+            input.val(notaFormatada);
+        } else {
+            input.val('');
         }
     });
 
