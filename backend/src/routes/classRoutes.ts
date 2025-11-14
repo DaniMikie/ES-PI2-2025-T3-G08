@@ -1,3 +1,13 @@
+/**
+ * Autor: Gustavo Alves e Daniela Mikie
+ * Projeto: Projeto NotaDez
+ * Arquivo: classRoutes.ts
+ * Data: 18/09/2025
+ * 
+ * Rotas de Turmas
+ * Define endpoints de CRUD de turmas
+ */
+
 import { Router } from "express";
 import { create, getAll, update, remove } from "../controllers/classController";
 import { authMiddleware } from "../middlewares/authMiddleware";

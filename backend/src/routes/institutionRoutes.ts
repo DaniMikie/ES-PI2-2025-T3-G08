@@ -1,3 +1,13 @@
+/**
+ * Autor: Gustavo Alves e Daniela Mikie
+ * Projeto: Projeto NotaDez
+ * Arquivo: institutionRoutes.ts
+ * Data: 18/09/2025
+ * 
+ * Rotas de Instituições
+ * Define endpoints de CRUD de instituições
+ */
+
 import { Router } from "express";
 import { create, getAll, getOne, update, remove } from "../controllers/institutionController";
 import { authMiddleware } from "../middlewares/authMiddleware";

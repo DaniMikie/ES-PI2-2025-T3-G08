@@ -1,3 +1,13 @@
+/**
+ * Autor: Gustavo Alves e Daniela Mikie
+ * Projeto: Projeto NotaDez
+ * Arquivo: gradeComponentRoutes.ts
+ * Data: 18/09/2025
+ * 
+ * Rotas de Componentes de Avaliação
+ * Define endpoints de CRUD de componentes de notas
+ */
+
 import { Router } from "express";
 import { create, getAll, remove } from "../controllers/gradeComponentController";
 import { authMiddleware } from "../middlewares/authMiddleware";

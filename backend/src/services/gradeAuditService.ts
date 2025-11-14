@@ -1,3 +1,13 @@
+/**
+ * Autor: Gustavo Alves e Daniela Mikie
+ * Projeto: Projeto NotaDez
+ * Arquivo: gradeAuditService.ts
+ * Data: 18/09/2025
+ * 
+ * Serviço de Auditoria de Notas
+ * Registra histórico de alterações em notas
+ */
+
 import { executeQuery } from "../db/database";
 
 export async function createAuditLog(

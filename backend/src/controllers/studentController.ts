@@ -1,4 +1,9 @@
 /**
+ * Autor: Gustavo Alves e Daniela Mikie
+ * Projeto: Projeto NotaDez
+ * Arquivo: studentController.ts
+ * Data: 18/09/2025
+ * 
  * Controller de Alunos
  * Gerencia requisições HTTP de CRUD de alunos
  */

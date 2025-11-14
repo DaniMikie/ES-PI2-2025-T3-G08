@@ -1,3 +1,13 @@
+/**
+ * Autor: Gustavo Alves e Daniela Mikie
+ * Projeto: Projeto NotaDez
+ * Arquivo: gradeComponentService.ts
+ * Data: 18/09/2025
+ * 
+ * Serviço de Componentes de Nota
+ * Gerencia componentes de avaliação e fórmulas de cálculo
+ */
+
 import { executeQuery } from "../db/database";
 
 export async function createGradeComponents(subjectId: number, components: { name: string; description: string }[], formula: string, userId: number = 0) {
@@ -34,44 +44,68 @@ export async function createGradeComponents(subjectId: number, components: { nam
     }
   }
 
+  // Validação: testa a fórmula substituindo componentes por 1 
+  try {
+    let formulaTeste = formula;
+    
+    // Substitui todos os componentes por 1
+    for (const comp of components) {
+      const regex = new RegExp(comp.name, 'gi');
+      formulaTeste = formulaTeste.replace(regex, '1');
+    }
+
+    // Avalia a fórmula usando Function (mais seguro que eval)
+    const resultado = new Function(`return ${formulaTeste}`)();
+
+    // Verifica se o resultado é um número válido
+    if (isNaN(resultado) || resultado < 0) {
+      throw new Error("Fórmula inválida! Com todas as notas = 1, o resultado deve ser um número positivo.");
+    }
+
+    // Verifica se o resultado é aproximadamente 1 (tolerância de 0.01)
+    if (Math.abs(resultado - 1) > 0.01) {
+      throw new Error(`Fórmula inválida! Com todas as notas = 1, o resultado é ${resultado.toFixed(2)}. Deveria ser 1.`);
+    }
+  } catch (error: any) {
+    if (error.message.includes("Fórmula inválida")) {
+      throw error;
+    }
+    throw new Error(`Erro ao validar fórmula: ${error.message}`);
+  }
+
   // Busca componentes existentes
   const componentesExistentes = await executeQuery(
     "SELECT id, name FROM grade_components WHERE subject_id = ?",
     [subjectId]
   );
 
-  // Identifica componentes que foram removidos
-  const nomesNovos = components.map(c => c.name);
-  const componentesRemovidos = componentesExistentes.filter(
-    (comp: any) => !nomesNovos.includes(comp.name)
-  );
-
-  // Se houver componentes removidos, registra DELETE na auditoria
-  if (componentesRemovidos.length > 0) {
+  // Se existem componentes, registra TODAS as notas na auditoria antes de excluir
+  if (componentesExistentes.length > 0) {
     const { createAuditLog } = await import("./gradeAuditService");
     
-    for (const compRemovido of componentesRemovidos) {
-      // Busca todas as notas desse componente para registrar na auditoria
-      const notasRemovidas = await executeQuery(
-        "SELECT student_id, grade FROM grades WHERE grade_component_id = ?",
-        [compRemovido.id]
-      );
+    // Busca TODAS as notas de TODOS os componentes da disciplina
+    const todasNotasRemovidas = await executeQuery(
+      `SELECT g.student_id, g.grade_component_id, g.grade
+       FROM grades g
+       INNER JOIN grade_components gc ON g.grade_component_id = gc.id
+       WHERE gc.subject_id = ?`,
+      [subjectId]
+    );
 
-      // Registra DELETE para cada nota
-      for (const nota of notasRemovidas) {
-        await createAuditLog(
-          nota.student_id,
-          compRemovido.id,
-          nota.grade,
-          null,
-          'DELETE',
-          userId
-        );
-      }
+    // Registra DELETE na auditoria para CADA nota
+    for (const nota of todasNotasRemovidas) {
+      await createAuditLog(
+        nota.student_id,
+        nota.grade_component_id,
+        nota.grade,
+        null,
+        'DELETE',
+        userId
+      );
     }
   }
 
-  // Remove componentes antigos
+  // Remove componentes antigos (CASCADE vai excluir as notas automaticamente)
   await executeQuery("DELETE FROM grade_components WHERE subject_id = ?", [subjectId]);
 
   // Insere novos componentes

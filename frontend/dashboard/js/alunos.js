@@ -773,7 +773,6 @@ $(document).ready(function () {
     const btnProximoFormula = document.querySelector("#btnProximoFormula");
     const btnVoltarComponentes = document.querySelector("#btnVoltarComponentes");
     const btnSalvarFormula = document.querySelector("#btnSalvarFormula");
-    const btnCriarNovo = document.querySelector("#btnCriarNovo");
     const btnEditarComponentes = document.querySelector("#btnEditarComponentes");
     const btnVoltarSelecao = document.querySelector("#btnVoltarSelecao");
     const btnAtualizarFormula = document.querySelector("#btnAtualizarFormula");
@@ -795,6 +794,7 @@ $(document).ready(function () {
     let componentesAdicionados = [];
     let componentesParaEditar = [];
     let formulaAtual = null;
+    let veioDeEdicao = false; // Controla se veio da tela de editar componentes
 
     // Máscara para o nome do componente
     $('#nomeComponente').mask('A0', {
@@ -923,7 +923,15 @@ $(document).ready(function () {
     // Voltar para componentes
     btnVoltarComponentes.addEventListener("click", () => {
         etapaFormula.style.display = "none";
-        etapaComponentes.style.display = "block";
+
+        // Se veio da tela de edição, volta para ela
+        if (veioDeEdicao) {
+            etapaEditarComponentes.style.display = "block";
+            veioDeEdicao = false; // Reseta o controle
+        } else {
+            // Senão, volta para a tela de cadastrar novos
+            etapaComponentes.style.display = "block";
+        }
     });
 
     // Validar fórmula
@@ -967,17 +975,17 @@ $(document).ready(function () {
 
             // Verifica se o resultado é exatamente 1
             if (isNaN(resultado) || resultado < 0) {
-                avisoFormula.textContent = "Fórmula inválida! Com todas as notas = 1, o resultado deve ser 1.";
+                avisoFormula.textContent = "Fórmula inválida! Com todas as notas, o resultado deve ser 1.";
                 avisoFormula.style.display = "flex";
                 avisoFormula.style.color = "red";
                 btnSalvarFormula.disabled = true;
             } else if (Math.abs(resultado - 1) > 0.01) {
-                avisoFormula.textContent = `Atenção: Com todas as notas = 1, o resultado é ${resultado.toFixed(2)}. Deveria ser 1.`;
+                avisoFormula.textContent = `Atenção: Com todas as notas, o resultado é ${resultado.toFixed(2)}. Deveria ser 1.`;
                 avisoFormula.style.display = "flex";
                 avisoFormula.style.color = "orange";
                 btnSalvarFormula.disabled = true;
             } else {
-                avisoFormula.textContent = `✓ Fórmula válida! Resultado com notas 1: ${resultado.toFixed(2)}`;
+                avisoFormula.textContent = `✓ Fórmula válida! Resultado com notas ${resultado.toFixed(2)}`;
                 avisoFormula.style.display = "flex";
                 avisoFormula.style.color = "green";
                 btnSalvarFormula.disabled = false;
@@ -1056,6 +1064,40 @@ $(document).ready(function () {
 
     // Salvar fórmula no backend
     btnSalvarFormula.addEventListener("click", async () => {
+        // Verifica se já existe fórmula cadastrada (atualização)
+        // Verifica variável local e depois verifica no banco de dados
+        let existeFormula = formulaAtual !== null;
+
+        try {
+            // Busca componentes e fórmula do banco para confirmar
+            const checkResponse = await fetch(`${API_URL}/grade-components/subject/${subjectId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (checkResponse.ok) {
+                const data = await checkResponse.json();
+                // Se existem componentes OU fórmula no banco, é uma atualização
+                existeFormula = existeFormula || (data.components && data.components.length > 0) || (data.formula !== null);
+            }
+        } catch (error) {
+            console.error('Erro ao verificar fórmula existente:', error);
+            // Em caso de erro, mantém a verificação local
+        }
+
+        // Se já existe fórmula, mostra aviso sobre exclusão de notas
+        if (existeFormula) {
+            const confirmar = confirm(
+                '⚠️ ATENÇÃO!\n\n' +
+                'Ao salvar esta fórmula, TODAS AS NOTAS dos alunos serão APAGADAS.\n\n' +
+                'As notas excluídas serão registradas no histórico de auditoria.\n\n' +
+                'Deseja continuar?'
+            );
+
+            if (!confirmar) {
+                return; // Cancela a operação
+            }
+        }
+
         // Normaliza a fórmula para maiúsculas antes de salvar
         let formula = inputFormula.value.trim();
 
@@ -1228,7 +1270,7 @@ $(document).ready(function () {
             avisoNomeNovo.style.display = "flex";
             avisoNomeNovo.textContent = nomeDuplicado ?
                 `O componente ${valorNome} já existe.` :
-                "Use o formato letra + número (ex: N1, T2).";
+                "Use letra + número (ex: N1, T2).";
             btnAddNovo.disabled = true;
         } else {
             nomeNovoInput.classList.remove("inputErrado");
@@ -1275,7 +1317,7 @@ $(document).ready(function () {
         }
 
         try {
-            // Salva os componentes editados mantendo a fórmula atual
+            // Busca a fórmula atual do banco (NÃO salva ainda)
             const response = await fetch(`${API_URL}/grade-components/subject/${subjectId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -1284,87 +1326,59 @@ $(document).ready(function () {
                 const data = await response.json();
                 const formulaAtualBanco = data.formula;
 
-                // Salva componentes editados
-                const saveResponse = await fetch(`${API_URL}/grade-components`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        subjectId: parseInt(subjectId),
-                        components: componentesParaEditar,
-                        formula: formulaAtualBanco
-                    })
+                // Marca que veio da tela de edição
+                veioDeEdicao = true;
+
+                // Fecha o modal e vai para a etapa de fórmula (SEM salvar ainda)
+                etapaEditarComponentes.style.display = "none";
+                etapaFormula.style.display = "block";
+
+                // Atualiza os componentes disponíveis
+                componentesAdicionados = componentesParaEditar.map(c => ({
+                    name: c.name,
+                    description: c.description
+                }));
+
+                // Mostra componentes disponíveis
+                componentesDisponiveis.innerHTML = "";
+                componentesAdicionados.forEach(comp => {
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "btn btn-sm btn-outline-primary";
+                    btn.textContent = comp.name;
+                    btn.onclick = () => {
+                        inputFormula.value += comp.name;
+                        inputFormula.focus();
+                        validarFormula();
+                    };
+                    componentesDisponiveis.appendChild(btn);
                 });
 
-                if (saveResponse.ok) {
-                    // Fecha o modal e vai para a etapa de fórmula
-                    etapaEditarComponentes.style.display = "none";
-                    etapaFormula.style.display = "block";
-
-                    // Atualiza os componentes disponíveis
-                    componentesAdicionados = componentesParaEditar.map(c => ({
-                        name: c.name,
-                        description: c.description
-                    }));
-
-                    // Mostra componentes disponíveis
-                    componentesDisponiveis.innerHTML = "";
-                    componentesAdicionados.forEach(comp => {
-                        const btn = document.createElement("button");
-                        btn.type = "button";
-                        btn.className = "btn btn-sm btn-outline-primary";
-                        btn.textContent = comp.name;
-                        btn.onclick = () => {
-                            inputFormula.value += comp.name;
-                            inputFormula.focus();
-                            validarFormula();
-                        };
-                        componentesDisponiveis.appendChild(btn);
-                    });
-
-                    // Carrega a fórmula atual no input
-                    inputFormula.value = formulaAtualBanco;
-                    validarFormula();
-                } else {
-                    alert('Erro ao salvar componentes');
-                }
+                // Carrega a fórmula atual no input (ou limpa se não houver)
+                inputFormula.value = formulaAtualBanco || '';
+                validarFormula();
+            } else {
+                const errorData = await response.json();
+                alert(`Erro ao buscar fórmula: ${errorData.error || 'Erro desconhecido'}`);
             }
         } catch (error) {
             console.error('Erro:', error);
-            alert('Erro ao conectar com o servidor');
+            alert(`Erro ao conectar com o servidor: ${error.message}`);
         }
-    });
-
-    // Botão criar novo
-    btnCriarNovo.addEventListener('click', () => {
-        // Reseta o estado inicial
-        lista.innerHTML = "";
-        componentesAdicionados = [];
-        btnProximoFormula.disabled = true;
-        avisoComponentes.style.display = "flex";
-        inputFormula.value = "";
-        nomeInput.value = "";
-        descricaoInput.value = "";
-        btnAdd.disabled = true;
-
-        etapaSelecao.style.display = "none";
-        etapaComponentes.style.display = "block";
-        etapaFormula.style.display = "none";
-        etapaEditarComponentes.style.display = "none";
     });
 
     // Botão excluir cálculo
     const btnExcluirCalculo = document.querySelector("#btnExcluirCalculo");
     btnExcluirCalculo.addEventListener('click', async () => {
         const confirmacao = confirm(
-            'Tem certeza que deseja excluir o calculo de notas?\n\n' +
-            'Serao excluidos:\n' +
+            '⚠️ ATENÇÃO - EXCLUSÃO PERMANENTE!\n\n' +
+            'Tem certeza que deseja excluir o cálculo de notas?\n\n' +
+            'Serão excluídos:\n' +
             '- Componentes (N1, N2, etc.)\n' +
-            '- Formula\n' +
-            '- Todas as notas dos alunos\n\n' +
-            'Esta acao nao pode ser desfeita!'
+            '- Fórmula\n' +
+            '- TODAS as notas dos alunos\n\n' +
+            'As notas excluídas serão registradas no histórico de auditoria.\n\n' +
+            'Esta ação NÃO pode ser desfeita!'
         );
 
         if (confirmacao) {
@@ -1375,11 +1389,11 @@ $(document).ready(function () {
                 });
 
                 if (response.ok) {
-                    alert('Calculo excluido com sucesso!');
+                    alert('Cálculo excluído com sucesso!');
                     $('#modalCadastrarNota').modal('hide');
                     location.reload();
                 } else {
-                    alert('Erro ao excluir calculo');
+                    alert('Erro ao excluir cálculo');
                 }
             } catch (error) {
                 console.error('Erro:', error);
@@ -1473,6 +1487,11 @@ $(document).ready(function () {
         // Limpa o input para permitir selecionar o mesmo arquivo novamente
         inputCSV.value = '';
     });
+
+    // Função para remover acentos
+    function removerAcentos(texto) {
+        return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
 
     async function processarCSV(csvText) {
         const linhas = csvText.split('\n').filter(linha => linha.trim() !== '');

@@ -1,4 +1,9 @@
 /**
+ * Autor: Gustavo Alves e Daniela Mikie
+ * Projeto: Projeto NotaDez
+ * Arquivo: courseController.ts
+ * Data: 18/09/2025
+ * 
  * Controller de Cursos
  * Gerencia requisições HTTP de consulta de cursos
  */
