@@ -187,9 +187,8 @@ $(document).ready(function () {
                         if (comp) {
                             const input = linha.querySelector(`input[data-componente="${comp.nome}"]`);
                             if (input && g.grade !== null) {
-                                // Formata nota com 1 casa decimal
-                                const notaFormatada = parseFloat(g.grade).toFixed(1);
-                                input.value = notaFormatada;
+                                // Mantém a nota sem arredondamento
+                                input.value = g.grade;
                             }
                         }
                     }
@@ -367,12 +366,8 @@ $(document).ready(function () {
             // Limita entre 0 e 10
             const notaLimitada = Math.min(Math.max(num, 0), 10);
 
-            // Remove zeros desnecessários
-            // Ex: 10.00 → 10, 8.50 → 8.5, 7.00 → 7, 9.75 → 9.75
-            let notaFormatada = notaLimitada.toFixed(2);
-            notaFormatada = parseFloat(notaFormatada).toString();
-
-            input.val(notaFormatada);
+            // Mantém a nota sem arredondamento, apenas remove zeros desnecessários
+            input.val(notaLimitada.toString());
         } else {
             input.val('');
         }
