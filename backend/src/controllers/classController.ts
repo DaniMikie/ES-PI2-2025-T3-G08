@@ -58,9 +58,10 @@ export async function getDeletionInfo(req: Request, res: Response) {
 
 export async function remove(req: Request, res: Response) {
   const { id } = req.params;
+  const userId = (req as any).user.id; // ID do usuário autenticado
 
   try {
-    const result = await classService.deleteClass(Number(id));
+    const result = await classService.deleteClass(Number(id), userId);
     res.status(200).json(result);
   } catch (error: any) {
     res.status(400).json({ error: error.message });

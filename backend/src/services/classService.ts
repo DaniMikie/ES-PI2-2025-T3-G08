@@ -189,8 +189,31 @@ export async function getClassDeletionInfo(classId: number) {
 /**
  * Deleta turma e todos os dados relacionados (alunos, notas)
  * classId - ID da turma
+ * userId - ID do usuário que está deletando (para auditoria)
  */
-export async function deleteClass(classId: number) {
+export async function deleteClass(classId: number, userId: number) {
+  // Busca todas as notas dos alunos da turma para registrar na auditoria
+  const grades = await executeQuery(
+    `SELECT g.id, g.student_id, g.grade_component_id, g.grade
+     FROM grades g
+     INNER JOIN students s ON g.student_id = s.id
+     WHERE s.class_id = ?`,
+    [classId]
+  );
+
+  // Registra auditoria para cada nota excluída
+  const { createAuditLog } = await import("./gradeAuditService");
+  for (const grade of grades) {
+    await createAuditLog(
+      grade.student_id,
+      grade.grade_component_id,
+      grade.grade,
+      null,
+      'DELETE',
+      userId
+    );
+  }
+
   // Deleta a turma (CASCADE vai excluir alunos e notas automaticamente)
   await executeQuery("DELETE FROM classes WHERE id = ?", [classId]);
   return { success: true };
