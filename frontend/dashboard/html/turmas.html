@@ -54,14 +54,19 @@
                 <div class="card-body">
                     <h5 class="card-title mb-3">Cadastrar nova turma</h5>
                         <form id="formTurma" class="row g-3">
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <label class="form-label titulo">Nome da turma</label>
                                 <input id="nomeTurma" type="text" class="form-control" placeholder="Ex: Turma 101">
+                                <p class="aviso" id="avisoNomeTurma"></p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label titulo">Código da turma</label>
+                                <input id="codigoTurma" type="text" class="form-control" placeholder="Ex: T101">
+                                <p class="aviso" id="avisoCodigoTurma"></p>
                             </div>
                             <div class="col-12">
                                 <button id="btnCadastrar" type="submit" class="btn btn-primary">Salvar</button>
                             </div>
-                            <p class="aviso" id="avisoTurma"></p>
                         </form>
                     </div>
                 </div>
@@ -74,6 +79,7 @@
                             <thead class="table-light">
                             <tr>
                                 <th>Nome da turma</th>
+                                <th>Código</th>
                                 <th class="text-center">Alunos</th>
                                 <th class="text-center">Ações</th>
                             </tr>

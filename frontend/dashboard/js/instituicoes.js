@@ -427,9 +427,10 @@ $(document).ready(function () {
 
   // Sistema de confirmação dupla para logout
   document.addEventListener("click", function (event) {
-    const btn = event.target;
+    const target = event.target;
+    const btn = target.classList.contains("sair") ? target : target.closest(".sair");
 
-    if (btn.classList.contains("sair")) {
+    if (btn) {
       event.preventDefault();
       event.stopPropagation();
 
@@ -444,7 +445,7 @@ $(document).ready(function () {
           resetarBotaoSair(botaoSair);
         }
         botaoSair = btn;
-        btn.textContent = "Confirma?";
+        btn.innerHTML = '<i class="bi bi-door-open"></i> Confirma?';
         btn.classList.remove("btn-outline-danger");
         btn.classList.add("btn-danger");
       }

@@ -124,7 +124,7 @@ export async function sendVerificationEmail(email: string, code: string, name: s
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Email de verificação enviado com sucesso:', info.messageId);
+    console.log(`✅ Email de verificação enviado para: ${email}`);
     return info;
   } catch (error) {
     console.error('Erro ao enviar email:', error);
@@ -241,7 +241,7 @@ export async function sendPasswordResetEmail(email: string, code: string, name: 
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Email de recuperação enviado com sucesso:', info.messageId);
+    console.log(`✅ Email de recuperação enviado para: ${email}`);
     return info;
   } catch (error) {
     console.error('Erro ao enviar email:', error);

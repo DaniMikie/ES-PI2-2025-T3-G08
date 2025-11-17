@@ -88,11 +88,38 @@ $(document).ready(function () {
   const tabela = document.querySelector("#tabelaTurma");
   const formTurma = document.querySelector("#formTurma");
   const nomeTurma = document.querySelector("#nomeTurma");
-  const avisoTurma = document.querySelector("#avisoTurma");
+  const codigoTurma = document.querySelector("#codigoTurma");
+  const avisoNomeTurma = document.querySelector("#avisoNomeTurma");
+  const avisoCodigoTurma = document.querySelector("#avisoCodigoTurma");
 
   // Máscara para o nome da turma, permite letras, números e espaços
   $('#nomeTurma').on('input', function () {
     let val = $(this).val().replace(/[^a-zA-Z0-9 ]/g, '');
+    $(this).val(val);
+  });
+
+  // Máscara para o código da turma: 1 letra + até 3 números (ex: T101, G201)
+  $('#codigoTurma').on('input', function () {
+    let val = $(this).val().toUpperCase();
+
+    // Remove caracteres inválidos
+    val = val.replace(/[^A-Z0-9]/g, '');
+
+    // Garante que começa com letra e tem no máximo 4 caracteres (1 letra + 3 números)
+    if (val.length > 0 && !/^[A-Z]/.test(val)) {
+      val = '';
+    }
+    else if (val.length > 4) {
+      val = val.substring(0, 4);
+    }
+
+    // Garante que após a primeira letra, só aceita números
+    if (val.length > 1) {
+      const letra = val[0];
+      const numeros = val.substring(1).replace(/[^0-9]/g, '');
+      val = letra + numeros;
+    }
+
     $(this).val(val);
   });
 
@@ -120,7 +147,7 @@ $(document).ready(function () {
 
         // Carrega turmas uma por uma para buscar quantidade de alunos
         for (const cls of classes) {
-          await adicionarLinhaTabela(cls.id, cls.name);
+          await adicionarLinhaTabela(cls.id, cls.name, cls.code);
         }
       }
     } catch (error) {
@@ -128,7 +155,7 @@ $(document).ready(function () {
     }
   }
 
-  async function adicionarLinhaTabela(id, nome) {
+  async function adicionarLinhaTabela(id, nome, codigo) {
     const novaLinha = document.createElement("tr");
     novaLinha.dataset.classId = id;
 
@@ -142,12 +169,14 @@ $(document).ready(function () {
         const students = await response.json();
         qtdAlunos = students.length;
       }
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Erro ao buscar alunos:', error);
     }
 
     novaLinha.innerHTML = `
       <td><input type="text" value="${nome}" disabled class="nomeTurma form-control form-control-sm"></td>
+      <td><input type="text" value="${codigo}" disabled class="codigoTurma form-control form-control-sm"></td>
       <td class="text-center"><span class="badge bg-primary">${qtdAlunos}</span></td>
       <td class="text-center">
         <button class="btn-ver btn btn-sm btn-outline-primary me-2">Ver turma</button>
@@ -162,9 +191,10 @@ $(document).ready(function () {
 
   // Adiciona eventos para detectar quando o usuário digita nos inputs
   nomeTurma.onkeyup = onInputKeyUp;
+  codigoTurma.onkeyup = onInputKeyUp;
 
   // Função que verifica se já existe uma turma com o mesmo nome
-  function turmaDuplicada(nome) {
+  function nomeDuplicado(nome) {
     let existe = false;
     const nomeUpper = nome.trim().toUpperCase();
 
@@ -179,28 +209,71 @@ $(document).ready(function () {
     return existe;
   }
 
+  // Função que verifica se já existe uma turma com o mesmo código
+  function codigoDuplicado(codigo) {
+    let existe = false;
+    const codigoUpper = codigo.trim().toUpperCase();
+
+    $('#tabelaTurma tbody tr').each(function () {
+      const codigoExistente = $(this).find('td').eq(1).find('input').val().trim().toUpperCase();
+      if (codigoExistente === codigoUpper) {
+        existe = true;
+        return false;
+      }
+    });
+
+    return existe;
+  }
+
   // Função que verifica se os inputs estão preenchidos corretamente
   function onInputKeyUp(_event) {
     const nome = nomeTurma.value.trim();
+    const codigo = codigoTurma.value.trim();
 
+    let nomeValido = true;
+    let codigoValido = true;
+
+    // Validação do nome
     if (nome.length === 0) {
       nomeTurma.classList.add("inputErrado");
-      btnCadastrar.disabled = true;
-      return;
+      avisoNomeTurma.textContent = "O nome não pode estar vazio";
+      avisoNomeTurma.style.display = "flex";
+      nomeValido = false;
+    } else if (nomeDuplicado(nome)) {
+      nomeTurma.classList.add("inputErrado");
+      avisoNomeTurma.textContent = "Já existe uma turma com esse nome";
+      avisoNomeTurma.style.display = "flex";
+      nomeValido = false;
     } else {
       nomeTurma.classList.remove("inputErrado");
+      avisoNomeTurma.style.display = "none";
     }
 
-    if (turmaDuplicada(nome)) {
-      nomeTurma.classList.add("inputErrado");
-      btnCadastrar.disabled = true;
-      avisoTurma.textContent = "Já existe uma turma com esse nome";
-      avisoTurma.style.display = "flex";
-    } else {
-      nomeTurma.classList.remove("inputErrado");
-      btnCadastrar.disabled = false;
-      avisoTurma.style.display = "none";
+    // Validação do código: 1 letra + 1 a 3 números
+    if (codigo.length === 0) {
+      codigoTurma.classList.add("inputErrado");
+      avisoCodigoTurma.textContent = "O código não pode estar vazio";
+      avisoCodigoTurma.style.display = "flex";
+      codigoValido = false;
     }
+    else if (!/^[A-Z]\d{1,3}$/.test(codigo)) {
+      codigoTurma.classList.add("inputErrado");
+      avisoCodigoTurma.textContent = "Formato inválido. Use 1 letra + até 3 números (ex: T101)";
+      avisoCodigoTurma.style.display = "flex";
+      codigoValido = false;
+    }
+    else if (codigoDuplicado(codigo)) {
+      codigoTurma.classList.add("inputErrado");
+      avisoCodigoTurma.textContent = "Já existe uma turma com esse código";
+      avisoCodigoTurma.style.display = "flex";
+      codigoValido = false;
+    }
+    else {
+      codigoTurma.classList.remove("inputErrado");
+      avisoCodigoTurma.style.display = "none";
+    }
+
+    btnCadastrar.disabled = !(nomeValido && codigoValido);
   }
 
   // Cria um novo elemento na tabela
@@ -208,8 +281,9 @@ $(document).ready(function () {
     event.preventDefault();
 
     const nome = nomeTurma.value.trim();
+    const codigo = codigoTurma.value.trim();
 
-    if (nome === "") return;
+    if (nome === "" || codigo === "") return;
 
     try {
       const response = await fetch(`${API_URL}/classes`, {
@@ -221,17 +295,18 @@ $(document).ready(function () {
         body: JSON.stringify({
           subjectId: parseInt(subjectId),
           name: nome,
-          code: nome // Usando o nome como código também
+          code: codigo
         })
       });
 
       if (response.ok) {
         const data = await response.json();
-        adicionarLinhaTabela(data.id, nome);
+        await adicionarLinhaTabela(data.id, nome, codigo);
         formTurma.reset();
         btnCadastrar.disabled = true;
       } else {
-        alert('Erro ao cadastrar turma');
+        const errorData = await response.json();
+        alert(errorData.error || 'Erro ao cadastrar turma');
       }
     } catch (error) {
       console.error('Erro:', error);
@@ -258,9 +333,12 @@ $(document).ready(function () {
         return;
       }
 
+      const inputCodigo = linha.querySelector("input.codigoTurma");
+
       if (salvando) {
         const classId = linha.dataset.classId;
         const novoNome = inputNome.value.trim();
+        const novoCodigo = inputCodigo.value.trim();
 
         try {
           const response = await fetch(`${API_URL}/classes/${classId}`, {
@@ -271,12 +349,13 @@ $(document).ready(function () {
             },
             body: JSON.stringify({
               name: novoNome,
-              code: novoNome
+              code: novoCodigo
             })
           });
 
           if (response.ok) {
             inputNome.disabled = true;
+            inputCodigo.disabled = true;
             btnVer.disabled = false;
 
             btn.textContent = "Editar";
@@ -290,20 +369,23 @@ $(document).ready(function () {
 
             linhaEditando = null;
             valoresOriginaisLinha = null;
-          } else {
-            alert('Erro ao atualizar turma');
+          }
+          else {
+            const errorData = await response.json();
+            alert(errorData.error || 'Erro ao atualizar turma');
           }
         } catch (error) {
           console.error('Erro:', error);
           alert('Erro ao conectar com o servidor');
         }
-      }
-      else {
+      } else {
         valoresOriginaisLinha = {
           nome: inputNome.value,
+          codigo: inputCodigo.value,
         };
 
         inputNome.disabled = false;
+        inputCodigo.disabled = false;
         btnVer.disabled = true;
 
         btn.textContent = "Salvar";
@@ -319,38 +401,67 @@ $(document).ready(function () {
 
         linhaEditando = linha;
 
+        // Aplica máscara no código durante edição
+        $(inputCodigo).on('input', function () {
+          let val = $(this).val().toUpperCase();
+          val = val.replace(/[^A-Z0-9]/g, '');
+          if (val.length > 0 && !/^[A-Z]/.test(val)) {
+            val = '';
+          } else if (val.length > 4) {
+            val = val.substring(0, 4);
+          } if (val.length > 1) {
+            const letra = val[0];
+            const numeros = val.substring(1).replace(/[^0-9]/g, '');
+            val = letra + numeros;
+          }
+          $(this).val(val);
+        });
+
         function validarEdicao() {
-          const nome = inputNome.value.trim().toUpperCase();
+          const nome = inputNome.value.trim();
+          const codigo = inputCodigo.value.trim().toUpperCase();
 
-          let duplicado = false;
+          let nomeValido = nome.length > 0;
+          let codigoValido = /^[A-Z]\d{1,3}$/.test(codigo);
 
+          // Verifica duplicata de nome
+          let nomeDuplicado = false;
           $('#tabelaTurma tbody tr').not(linha).each(function () {
             const nomeExistente = $(this).find('td').eq(0).find('input').val().trim().toUpperCase();
-
-            if (nomeExistente === nome) {
-              duplicado = true;
+            if (nomeExistente === nome.toUpperCase()) {
+              nomeDuplicado = true;
               return false;
             }
           });
 
-          if (nome.length === 0 || duplicado) {
-            btn.disabled = true;
+          // Verifica duplicata de código
+          let codigoDuplicado = false;
+          $('#tabelaTurma tbody tr').not(linha).each(function () {
+            const codigoExistente = $(this).find('td').eq(1).find('input').val().trim().toUpperCase();
+            if (codigoExistente === codigo) {
+              codigoDuplicado = true;
+              return false;
+            }
+          });
 
-            if (nome.length === 0 || duplicado) {
-              inputNome.classList.add("inputErrado");
-            }
-            else {
-              inputNome.classList.remove("inputErrado");
-            }
-          }
-          else {
-            btn.disabled = false;
+          if (!nomeValido || nomeDuplicado) {
+            inputNome.classList.add("inputErrado");
+          } else {
             inputNome.classList.remove("inputErrado");
           }
+
+          if (!codigoValido || codigoDuplicado) {
+            inputCodigo.classList.add("inputErrado");
+          } else {
+            inputCodigo.classList.remove("inputErrado");
+          }
+
+          btn.disabled = !(nomeValido && codigoValido && !nomeDuplicado && !codigoDuplicado);
         }
 
         validarEdicao();
         inputNome.onkeyup = validarEdicao;
+        inputCodigo.onkeyup = validarEdicao;
       }
     }
   });
@@ -366,9 +477,12 @@ $(document).ready(function () {
       const btnEditar = linha.querySelector(".btn-editar");
       const btnVer = linha.querySelector(".btn-ver");
       const inputNome = linha.querySelector(".nomeTurma");
+      const inputCodigo = linha.querySelector(".codigoTurma");
 
       inputNome.value = valoresOriginaisLinha.nome;
+      inputCodigo.value = valoresOriginaisLinha.codigo;
       inputNome.disabled = true;
+      inputCodigo.disabled = true;
 
       btnEditar.textContent = "Editar";
       btnEditar.classList.remove("btn-success");
@@ -376,6 +490,7 @@ $(document).ready(function () {
       btnEditar.disabled = false;
 
       inputNome.classList.remove("inputErrado");
+      inputCodigo.classList.remove("inputErrado");
       btnEditar.disabled = false;
       btnVer.disabled = false;
 
@@ -402,23 +517,47 @@ $(document).ready(function () {
         const classId = linha.dataset.classId;
 
         try {
-          const response = await fetch(`${API_URL}/classes/${classId}`, {
+          // Busca informações do backend sobre o que será excluído
+          const infoResponse = await fetch(`${API_URL}/classes/${classId}/deletion-info`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+
+          if (!infoResponse.ok) {
+            const errorData = await infoResponse.json();
+            alert(errorData.error || 'Erro ao buscar informações da turma');
+            resetarBotaoExcluir(btn);
+            botaoExcluir = null;
+            return;
+          }
+
+          const info = await infoResponse.json();
+
+          // Usa a mensagem completa do backend
+          const confirmacao = confirm(info.message);
+
+          if (!confirmacao) {
+            resetarBotaoExcluir(btn);
+            botaoExcluir = null;
+            return;
+          }
+
+          // Executa a exclusão
+          const deleteResponse = await fetch(`${API_URL}/classes/${classId}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
           });
 
-          if (response.ok) {
+          if (deleteResponse.ok) {
             linha.remove();
+            alert('Turma excluída com sucesso!');
           } else {
-            const errorData = await response.json();
+            const errorData = await deleteResponse.json();
             alert(errorData.error || 'Erro ao excluir turma');
-            // Reseta o botão para o estado inicial após erro
             resetarBotaoExcluir(btn);
           }
         } catch (error) {
           console.error('Erro:', error);
           alert('Erro ao conectar com o servidor');
-          // Reseta o botão para o estado inicial após erro
           resetarBotaoExcluir(btn);
         }
 
@@ -464,9 +603,10 @@ $(document).ready(function () {
 
   // Ao clicar em sair, volta para o login 
   document.addEventListener("click", function (event) {
-    const btn = event.target;
+    const target = event.target;
+    const btn = target.classList.contains("sair") ? target : target.closest(".sair");
 
-    if (btn.classList.contains("sair")) {
+    if (btn) {
       event.preventDefault();
       event.stopPropagation();
 
@@ -477,7 +617,7 @@ $(document).ready(function () {
       else {
         if (botaoSair) resetarBotaoSair(botaoSair);
         botaoSair = btn;
-        btn.textContent = "Confirma?";
+        btn.innerHTML = '<i class="bi bi-door-open"></i> Confirma?';
         btn.classList.remove("btn-outline-danger");
         btn.classList.add("btn-danger");
       }

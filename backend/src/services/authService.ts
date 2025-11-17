@@ -97,19 +97,17 @@ export async function registerUser(name: string, email: string, phone: string, p
     userData: { name: name.trim(), email: emailNormalized, phone: phoneClean, password: hashedPassword }
   });
 
-  // Tenta enviar email de verificação
+  // Envia email de verificação
   try {
     const { sendVerificationEmail } = await import("./emailService");
     await sendVerificationEmail(emailNormalized, code, name.trim());
   } catch (error) {
     console.error('Erro ao enviar email:', error);
-    // Em desenvolvimento, exibe código no console se email falhar
-    console.log(`📧 Código de verificação para ${emailNormalized}: ${code}`);
+    throw new Error("Erro ao enviar email de verificação. Tente novamente mais tarde.");
   }
 
   return {
-    message: "Código de verificação enviado para o email",
-    code // Retorna código apenas em desenvolvimento
+    message: "Código de verificação enviado para o email"
   };
 }
 

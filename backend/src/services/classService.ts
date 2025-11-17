@@ -31,13 +31,28 @@ export async function createClass(subjectId: number, name: string, code: string)
     throw new Error("O código da turma não pode estar vazio.");
   }
 
+  // Validação: código deve ter 1 letra maiúscula + 1 a 3 números (ex: T101, G204)
+  if (!/^[A-Z]\d{1,3}$/.test(code.trim())) {
+    throw new Error("O código da turma deve ter 1 letra maiúscula seguida de 1 a 3 números (ex: T101, G204).");
+  }
+
+  // Verifica duplicata de nome na mesma disciplina
+  const existingName = await executeQuery(
+    "SELECT id FROM classes WHERE subject_id = ? AND name = ?",
+    [subjectId, name.trim()]
+  );
+
+  if (existingName.length > 0) {
+    throw new Error(`Já existe uma turma cadastrada com o nome "${name}" nesta disciplina.`);
+  }
+
   // Verifica duplicata de código na mesma disciplina
-  const existing = await executeQuery(
+  const existingCode = await executeQuery(
     "SELECT id FROM classes WHERE subject_id = ? AND code = ?",
     [subjectId, code.trim()]
   );
 
-  if (existing.length > 0) {
+  if (existingCode.length > 0) {
     throw new Error(`Já existe uma turma cadastrada com o código "${code}" nesta disciplina.`);
   }
 
@@ -88,6 +103,11 @@ export async function updateClass(classId: number, name: string, code: string) {
     throw new Error("O código da turma não pode estar vazio.");
   }
 
+  // Validação: código deve ter 1 letra maiúscula + 1 a 3 números (ex: T101, G204)
+  if (!/^[A-Z]\d{1,3}$/.test(code.trim())) {
+    throw new Error("O código da turma deve ter 1 letra maiúscula seguida de 1 a 3 números (ex: T101, G204).");
+  }
+
   // Busca a disciplina da turma
   const classData = await executeQuery(
     "SELECT subject_id FROM classes WHERE id = ?",
@@ -98,13 +118,23 @@ export async function updateClass(classId: number, name: string, code: string) {
     throw new Error("Turma não encontrada.");
   }
 
+  // Verifica duplicata de nome na mesma disciplina (exceto a própria turma)
+  const existingName = await executeQuery(
+    "SELECT id FROM classes WHERE subject_id = ? AND name = ? AND id != ?",
+    [classData[0].subject_id, name.trim(), classId]
+  );
+
+  if (existingName.length > 0) {
+    throw new Error(`Já existe outra turma cadastrada com o nome "${name}" nesta disciplina.`);
+  }
+
   // Verifica duplicata de código na mesma disciplina (exceto a própria turma)
-  const existing = await executeQuery(
+  const existingCode = await executeQuery(
     "SELECT id FROM classes WHERE subject_id = ? AND code = ? AND id != ?",
     [classData[0].subject_id, code.trim(), classId]
   );
 
-  if (existing.length > 0) {
+  if (existingCode.length > 0) {
     throw new Error(`Já existe outra turma cadastrada com o código "${code}" nesta disciplina.`);
   }
 
@@ -117,20 +147,51 @@ export async function updateClass(classId: number, name: string, code: string) {
 }
 
 /**
- * Deleta turma (com verificação de safe deletion)
+ * Busca informações sobre o que será excluído ao deletar uma turma
  * classId - ID da turma
  */
-export async function deleteClass(classId: number) {
-  // SAFE DELETION: Verifica se existem alunos cadastrados
+export async function getClassDeletionInfo(classId: number) {
+  // Busca informações da turma
+  const classInfo = await executeQuery(
+    "SELECT name, code FROM classes WHERE id = ?",
+    [classId]
+  );
+
+  if (classInfo.length === 0) {
+    throw new Error("Turma não encontrada.");
+  }
+
+  // Conta quantos alunos serão excluídos
   const students = await executeQuery(
     "SELECT COUNT(*) as count FROM students WHERE class_id = ?",
     [classId]
   );
 
-  if (students[0].count > 0) {
-    throw new Error("Não é possível excluir esta turma pois existem alunos cadastrados. Exclua os alunos primeiro.");
-  }
+  // Conta quantas notas serão excluídas
+  const grades = await executeQuery(
+    "SELECT COUNT(*) as count FROM grades WHERE student_id IN (SELECT id FROM students WHERE class_id = ?)",
+    [classId]
+  );
 
+  // Monta a mensagem completa
+  let message = `⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!\n\n`;
+  message += `Ao excluir a turma "${classInfo[0].name}" (${classInfo[0].code}), serão excluídos:\n\n`;
+  message += `• ${students[0].count} aluno(s) cadastrado(s)\n`;
+  message += `• ${grades[0].count} nota(s) registrada(s)\n\n`;
+  message += `Os componentes de nota e fórmula da disciplina NÃO serão excluídos (são compartilhados entre turmas).\n\n`;
+  message += `Tem certeza que deseja continuar?`;
+
+  return {
+    message: message
+  };
+}
+
+/**
+ * Deleta turma e todos os dados relacionados (alunos, notas)
+ * classId - ID da turma
+ */
+export async function deleteClass(classId: number) {
+  // Deleta a turma (CASCADE vai excluir alunos e notas automaticamente)
   await executeQuery("DELETE FROM classes WHERE id = ?", [classId]);
   return { success: true };
 }

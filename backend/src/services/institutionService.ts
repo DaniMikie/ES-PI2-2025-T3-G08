@@ -31,14 +31,17 @@ export async function createInstitution(userId: number, institutionName: string,
     throw new Error("O nome do curso deve conter apenas letras, números e espaços.");
   }
 
-  // Verifica duplicata de instituição para o usuário
+  // Verifica duplicata de instituição + curso para o usuário
+  // Permite mesma instituição com cursos diferentes
   const existing = await executeQuery(
-    "SELECT id FROM institutions WHERE user_id = ? AND name = ?",
-    [userId, institutionName.trim()]
+    `SELECT i.id FROM institutions i
+     INNER JOIN courses c ON c.institution_id = i.id
+     WHERE i.user_id = ? AND i.name = ? AND c.name = ?`,
+    [userId, institutionName.trim(), courseName.trim()]
   );
 
   if (existing.length > 0) {
-    throw new Error(`Já existe uma instituição cadastrada com o nome "${institutionName}".`);
+    throw new Error(`Já existe uma instituição "${institutionName}" com o curso "${courseName}" cadastrada.`);
   }
 
   const queries = [
@@ -130,14 +133,17 @@ export async function updateInstitution(institutionId: number, userId: number, i
     throw new Error("Instituição não encontrada");
   }
 
-  // Verifica duplicata de instituição para o usuário (exceto a própria)
+  // Verifica duplicata de instituição + curso para o usuário (exceto a própria)
+  // Permite mesma instituição com cursos diferentes
   const existing = await executeQuery(
-    "SELECT id FROM institutions WHERE user_id = ? AND name = ? AND id != ?",
-    [userId, institutionName.trim(), institutionId]
+    `SELECT i.id FROM institutions i
+     INNER JOIN courses c ON c.institution_id = i.id
+     WHERE i.user_id = ? AND i.name = ? AND c.name = ? AND i.id != ?`,
+    [userId, institutionName.trim(), courseName.trim(), institutionId]
   );
 
   if (existing.length > 0) {
-    throw new Error(`Já existe outra instituição cadastrada com o nome "${institutionName}".`);
+    throw new Error(`Já existe outra instituição "${institutionName}" com o curso "${courseName}" cadastrada.`);
   }
 
   await executeQuery(

@@ -54,8 +54,7 @@ export async function requestPasswordReset(email: string) {
     await sendPasswordResetEmail(emailNormalized, code, user.name);
   } catch (error) {
     console.error('Erro ao enviar email:', error);
-    // Continua mesmo se o email falhar (para desenvolvimento)
-    console.log(`📧 Código de recuperação para ${emailNormalized}: ${code}`);
+    throw new Error("Erro ao enviar email de recuperação. Tente novamente mais tarde.");
   }
 
   return {

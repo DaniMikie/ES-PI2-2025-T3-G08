@@ -23,8 +23,22 @@
         <!-- Formulário para entrada do código enviado ao usuário -->
         <form class="form" id="formCodigoConta">   
             
-            <label class="label-codigo" for="txtCodigo">Digite o código enviado para o e-mail: <strong id="emailUsuario"></strong></label><br/>
-            <input class="input" id="txtCodigo" placeholder="Código" type="text" required><br/><br/>
+            <label class="label-codigo">Digite o código enviado para o e-mail: <strong id="emailUsuario"></strong></label><br/>
+            
+            <!-- Container dos 6 inputs de código -->
+            <div class="codigo-container">
+                <input class="codigo-input" id="codigo1" type="text" maxlength="1" required>
+                <input class="codigo-input" id="codigo2" type="text" maxlength="1" required>
+                <input class="codigo-input" id="codigo3" type="text" maxlength="1" required>
+                <input class="codigo-input" id="codigo4" type="text" maxlength="1" required>
+                <input class="codigo-input" id="codigo5" type="text" maxlength="1" required>
+                <input class="codigo-input" id="codigo6" type="text" maxlength="1" required>
+            </div>
+            
+            <!-- Aviso de erro -->
+            <p class="aviso" id="avisoCodigo"></p>
+            <br/>
+            
             <!-- Botão de confirmação -->
             <button class="btn" id="btnProximo" type="submit">Avançar</button>
 

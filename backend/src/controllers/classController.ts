@@ -45,6 +45,17 @@ export async function update(req: Request, res: Response) {
   }
 }
 
+export async function getDeletionInfo(req: Request, res: Response) {
+  const { id } = req.params;
+
+  try {
+    const info = await classService.getClassDeletionInfo(Number(id));
+    res.status(200).json(info);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+}
+
 export async function remove(req: Request, res: Response) {
   const { id } = req.params;
 

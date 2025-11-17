@@ -15,8 +15,16 @@ const fluxo = parametroAnterior.get('fluxo');
 // Captura os elementos do HTML
 const form = document.querySelector("#formCodigoConta");
 const btnProximo = document.querySelector('#btnProximo');
-const inputCodigo = document.querySelector("#txtCodigo");
 const emailUsuario = document.querySelector("#emailUsuario");
+const avisoCodigo = document.querySelector("#avisoCodigo");
+const inputs = [
+    document.querySelector("#codigo1"),
+    document.querySelector("#codigo2"),
+    document.querySelector("#codigo3"),
+    document.querySelector("#codigo4"),
+    document.querySelector("#codigo5"),
+    document.querySelector("#codigo6")
+];
 
 // Recupera email do localStorage conforme o fluxo
 let email = '';
@@ -44,38 +52,110 @@ if (email) {
 btnProximo.disabled = true;
 btnProximo.classList.add("btnDesativado");
 
-// Aplica máscara: apenas números, máximo 6 dígitos
-inputCodigo.addEventListener('input', function () {
-    let valor = this.value.replace(/\D/g, ''); // Remove não-números
-    valor = valor.slice(0, 6); // Limita a 6 dígitos
-    this.value = valor;
+// Foca no primeiro input ao carregar
+inputs[0].focus();
+
+// Adiciona eventos para cada input
+inputs.forEach((input, index) => {
+    // Permite apenas números
+    input.addEventListener('input', function (e) {
+        const valor = this.value.replace(/\D/g, '');
+        this.value = valor;
+
+        // Limpa mensagem de erro ao começar a digitar
+        limparErro();
+
+        // Se digitou um número, move para o próximo input
+        if (valor.length === 1 && index < 5) {
+            inputs[index + 1].focus();
+        }
+
+        // Valida se todos os campos estão preenchidos
+        validarCodigo();
+    });
+
+    // Permite navegar com backspace
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Backspace' && this.value === '' && index > 0) {
+            inputs[index - 1].focus();
+        }
+    });
+
+    // Permite colar código completo
+    input.addEventListener('paste', function (e) {
+        e.preventDefault();
+        const pasteData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+
+        pasteData.split('').forEach((char, i) => {
+            if (inputs[i]) {
+                inputs[i].value = char;
+            }
+        });
+
+        // Foca no último input preenchido ou no próximo vazio
+        const nextEmpty = inputs.findIndex(inp => inp.value === '');
+        if (nextEmpty !== -1) {
+            inputs[nextEmpty].focus();
+        }
+        else {
+            inputs[5].focus();
+        }
+
+        validarCodigo();
+    });
 });
 
-// Adiciona evento de digitação
-inputCodigo.onkeyup = onInputKeyUp;
+// Valida se todos os 6 dígitos foram preenchidos
+function validarCodigo() {
+    const todosPreenchidos = inputs.every(input => input.value.length === 1);
 
-// Valida código em tempo real (deve ter exatamente 6 dígitos)
-function onInputKeyUp(_event) {
-    const codigo = inputCodigo.value.trim();
-    const isValid = codigo.length === 6;
-
-    // Habilita botão apenas se código tiver 6 dígitos
-    if (isValid) {
+    if (todosPreenchidos) {
         btnProximo.disabled = false;
         btnProximo.classList.remove("btnDesativado");
         btnProximo.classList.add("btn");
     }
     else {
         btnProximo.disabled = true;
+        btnProximo.classList.remove("btn");
         btnProximo.classList.add("btnDesativado");
     }
+}
+
+// Função para obter o código completo
+function obterCodigo() {
+    return inputs.map(input => input.value).join('');
+}
+
+// Função para mostrar erro visual
+function mostrarErro(mensagem) {
+    // Mostra mensagem de erro
+    avisoCodigo.textContent = mensagem || 'Código inválido. Tente novamente.';
+    avisoCodigo.style.display = 'block';
+
+    // Adiciona classe de erro nos inputs
+    inputs.forEach(input => {
+        input.classList.add('erro');
+        input.value = '';
+    });
+
+    // Remove a classe de erro após a animação
+    setTimeout(() => {
+        inputs.forEach(input => input.classList.remove('erro'));
+        inputs[0].focus();
+    }, 500);
+}
+
+// Função para limpar erro
+function limparErro() {
+    avisoCodigo.style.display = 'none';
+    avisoCodigo.textContent = '';
 }
 
 // Verifica código ao enviar o formulário
 form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const codigo = inputCodigo.value.trim();
+    const codigo = obterCodigo();
 
     // FLUXO DE CADASTRO: verifica código de confirmação
     if (fluxo === 'cadastro') {
@@ -104,7 +184,7 @@ form.addEventListener("submit", async (event) => {
                 localStorage.removeItem('registerEmail');
                 window.location.href = 'sucesso.html?fluxo=cadastro';
             } else {
-                alert(data.error || 'Código inválido');
+                mostrarErro(data.error || 'Código inválido');
             }
         } catch (error) {
             // Erro de conexão com servidor
@@ -141,7 +221,7 @@ form.addEventListener("submit", async (event) => {
                 localStorage.setItem('resetCode', codigo);
                 window.location.href = 'alteracaoSenha.html';
             } else {
-                alert(data.error || 'Código inválido');
+                mostrarErro(data.error || 'Código inválido');
             }
         } catch (error) {
             // Erro de conexão com servidor
