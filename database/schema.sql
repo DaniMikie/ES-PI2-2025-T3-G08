@@ -6,7 +6,7 @@
 --Autor: Daniela Mikie
 --Projeto: Projeto NotaDez
 --Arquivo: schema.sql
---Data: 7/10/2025
+--Data: 6/10/2025
 
 -- Criar banco de dados
 CREATE DATABASE IF NOT EXISTS notadezbd CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
