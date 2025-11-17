@@ -1,8 +1,8 @@
 /**
- * Autor: Gustavo Alves e Daniela Mikie\
+ * Autor: Daniela Mikie
  * Projeto: Projeto NotaDez
  * Arquivo: authRoutes.ts
- * Data: 18/09/2025
+ * Data: 10/10/2025
  * 
  * Rotas de Autenticação
  * Define endpoints de login, registro e verificação

@@ -1,8 +1,8 @@
 /**
- * Autor: Gustavo Alves e Daniela Mikie
+ * Autor: Daniela Mikie
  * Projeto: Projeto NotaDez
  * Arquivo: classRoutes.ts
- * Data: 18/09/2025
+ * Data: 18/10/2025
  * 
  * Rotas de Turmas
  * Define endpoints de CRUD de turmas

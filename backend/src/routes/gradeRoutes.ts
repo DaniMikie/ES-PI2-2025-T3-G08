@@ -1,8 +1,8 @@
 /**
- * Autor: Gustavo Alves e Daniela Mikie
+ * Autor: Daniela Mikie
  * Projeto: Projeto NotaDez
  * Arquivo: gradeRoutes.ts
- * Data: 18/09/2025
+ * Data: 31/10/2025
  * 
  * Rotas de Notas
  * Define endpoints de lançamento e consulta de notas

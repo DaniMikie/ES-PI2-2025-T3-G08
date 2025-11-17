@@ -1,8 +1,8 @@
 /**
- * Autor: Gustavo Alves e Daniela Mikie
+ * Autor: Daniela Mikie
  * Projeto: Projeto NotaDez
  * Arquivo: gradeService.ts
- * Data: 18/09/2025
+ * Data: 31/10/2025
  * 
  * Serviço de Notas
  * Gerencia lançamento e consulta de notas dos alunos

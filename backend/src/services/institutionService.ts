@@ -1,8 +1,8 @@
 /**
- * Autor: Gustavo Alves e Daniela Mikie
+ * Autor: Daniela Mikie
  * Projeto: Projeto NotaDez
  * Arquivo: institutionService.ts
- * Data: 18/09/2025
+ * Data: 12/10/2025
  * 
  * Serviço de Instituições
  * Gerencia CRUD de instituições de ensino e seus cursos

@@ -1,5 +1,5 @@
 /**
- * Autor: Gustavo Alves e Daniela Mikie
+ * Autor: Daniela Mikie
  * Projeto: Projeto NotaDez
  * Arquivo: gradeAuditService.ts
  * Data: 18/09/2025

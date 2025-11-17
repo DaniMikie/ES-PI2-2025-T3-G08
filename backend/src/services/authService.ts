@@ -2,7 +2,7 @@
  * Autor: Gustavo Alves e Daniela Mikie
  * Projeto: Projeto NotaDez
  * Arquivo: authService.ts
- * Data: 18/09/2025
+ * Data: 10/10/2025
  * 
  * Serviço de Autenticação
  * Gerencia registro, login e verificação de usuários

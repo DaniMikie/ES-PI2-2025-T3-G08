@@ -2,7 +2,7 @@
  * Autor: Gustavo Alves e Daniela Mikie
  * Projeto: Projeto NotaDez
  * Arquivo: authMiddleware.ts
- * Data: 18/09/2025
+ * Data: 10/10/2025
  * 
  * Middleware de Autenticação JWT
  * Verifica se requisição possui token válido no header Authorization

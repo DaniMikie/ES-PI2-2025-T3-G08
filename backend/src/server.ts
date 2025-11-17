@@ -1,8 +1,8 @@
 /**
- * Autor: Gustavo Alves e Daniela Mikie
+ * Autor: Daniela Mikie
  * Projeto: Projeto NotaDez
  * Arquivo: server.ts
- * Data: 18/09/2025
+ * Data: 4/11/2025
  * 
  * Servidor Principal da API
  * Configuração do Express e registro de rotas

@@ -2,7 +2,7 @@
  * Autor: Gustavo Alves e Daniela Mikie
  * Projeto: Projeto NotaDez
  * Arquivo: gradeComponentService.ts
- * Data: 18/09/2025
+ * Data: 28/10/2025
  * 
  * Serviço de Componentes de Nota
  * Gerencia componentes de avaliação e fórmulas de cálculo
