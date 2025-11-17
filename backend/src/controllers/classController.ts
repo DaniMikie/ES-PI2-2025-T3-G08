@@ -1,8 +1,8 @@
 /**
- * Autor: Gustavo Alves e Daniela Mikie
+ * Autor: Daniela Mikie
  * Projeto: Projeto NotaDez
  * Arquivo: classController.ts
- * Data: 18/09/2025
+ * Data: 18/10/2025
  * 
  * Controller de Turmas
  * Gerencia requisições HTTP de CRUD de turmas

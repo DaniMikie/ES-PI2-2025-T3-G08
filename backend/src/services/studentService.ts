@@ -1,8 +1,8 @@
 /**
- * Autor: Gustavo Alves e Daniela Mikie
+ * Autor: Daniela Mikie
  * Projeto: Projeto NotaDez
  * Arquivo: studentService.ts
- * Data: 18/09/2025
+ * Data: 19/10/2025
  * 
  * Serviço de Alunos
  * Gerencia CRUD de alunos das turmas

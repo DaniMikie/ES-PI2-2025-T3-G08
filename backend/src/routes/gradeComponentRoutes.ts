@@ -1,8 +1,8 @@
 /**
- * Autor: Gustavo Alves e Daniela Mikie
+ * Autor: Daniela Mikie
  * Projeto: Projeto NotaDez
  * Arquivo: gradeComponentRoutes.ts
- * Data: 18/09/2025
+ * Data: 28/10/2025
  * 
  * Rotas de Componentes de Avaliação
  * Define endpoints de CRUD de componentes de notas

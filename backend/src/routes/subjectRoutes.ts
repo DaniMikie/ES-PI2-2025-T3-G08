@@ -1,8 +1,8 @@
 /**
- * Autor: Gustavo Alves e Daniela Mikie
+ * Autor: Daniela Mikie
  * Projeto: Projeto NotaDez
  * Arquivo: subjectRoutes.ts
- * Data: 18/09/2025
+ * Data: 15/10/2025
  * 
  * Rotas de Disciplinas
  * Define endpoints de CRUD de disciplinas
