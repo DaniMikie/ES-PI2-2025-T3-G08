@@ -2,7 +2,7 @@
  * Autor: Daniela Mikie
  * Projeto: Projeto NotaDez
  * Arquivo: passwordRoutes.ts
- * Data: 18/09/2025
+ * Data: 18/10/2025
  * 
  * Rotas de Recuperação de Senha
  * Define endpoints de recuperação e redefinição de senha
