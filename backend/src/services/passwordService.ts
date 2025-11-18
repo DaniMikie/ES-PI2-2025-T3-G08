@@ -2,7 +2,7 @@
  * Autor: Gustavo Alves e Daniela Mikie
  * Projeto: Projeto NotaDez
  * Arquivo: passwordService.ts
- * Data: 18/09/2025
+ * Data: 18/10/2025
  * 
  * Serviço de Recuperação de Senha
  * Gerencia solicitação e redefinição de senha via código
